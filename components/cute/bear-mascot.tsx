@@ -16,7 +16,7 @@ type BearExpression =
   | "cheer"
   | "think"
   | "sad"
-type BearTone = "honey"
+type BearTone = "honey" | "white" | "choco"
 
 const TONE_STOPS: Record<
   BearTone,
@@ -28,6 +28,20 @@ const TONE_STOPS: Record<
     deep: "#CE9A57",
     patch: "#FFF3DE",
     patchDeep: "#E8CFA0",
+  },
+  white: {
+    light: "#FFFFFF",
+    base: "#F1F3F6",
+    deep: "#D7DEE6",
+    patch: "#FFFFFF",
+    patchDeep: "#E7ECF1",
+  },
+  choco: {
+    light: "#EDD9C4",
+    base: "#8C5A34",
+    deep: "#5E3A1F",
+    patch: "#F3E6D2",
+    patchDeep: "#D9BE97",
   },
 }
 

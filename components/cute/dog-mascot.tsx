@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils"
 
 // docs/specs/creature-collection/spec.md의 "동물 종 자체를 늘려 수집" 방향에 따라
 // CatMascot과는 독립된 형태로 그린 시바견 톤 강아지 마스코트.
-// 1종 1색 검증용 첫 번째 종 — 표정 8가지는 CatMascot과 동일한 세트를 지원한다.
+// 표정 8가지는 CatMascot과 동일한 세트를 지원하고, 색상 버전마다 몸통·가슴 배색을
+// 다르게 줘서 같은 형태 안에서도 다른 품종처럼 보이게 한다.
 type DogExpression =
   | "neutral"
   | "happy"
@@ -16,7 +17,7 @@ type DogExpression =
   | "cheer"
   | "think"
   | "sad"
-type DogTone = "cream"
+type DogTone = "cream" | "black" | "white"
 
 const TONE_STOPS: Record<
   DogTone,
@@ -28,6 +29,22 @@ const TONE_STOPS: Record<
     deep: "#E7BD7C",
     patch: "#FFFFFF",
     patchDeep: "#F0E7D6",
+  },
+  black: {
+    // 눈(--ink)이 명도가 낮아, 얼굴 중심부(그라데이션 앞쪽)는 눈과 구분되도록
+    // 충분히 밝게 두고 몸통 가장자리(deep)만 어둡게 해서 "검은 개" 느낌을 낸다.
+    light: "#9B948C",
+    base: "#6B645C",
+    deep: "#332D29",
+    patch: "#FFFFFF",
+    patchDeep: "#EDE7DC",
+  },
+  white: {
+    light: "#FFFFFF",
+    base: "#F5F3EE",
+    deep: "#DED7C7",
+    patch: "#FFF8E8",
+    patchDeep: "#EFE3C4",
   },
 }
 

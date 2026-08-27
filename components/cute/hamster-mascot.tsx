@@ -16,7 +16,7 @@ type HamsterExpression =
   | "cheer"
   | "think"
   | "sad"
-type HamsterTone = "brown"
+type HamsterTone = "brown" | "white" | "gray"
 
 const TONE_STOPS: Record<
   HamsterTone,
@@ -28,6 +28,20 @@ const TONE_STOPS: Record<
     deep: "#D9A96A",
     patch: "#FFF6E8",
     patchDeep: "#F0DFC0",
+  },
+  white: {
+    light: "#FFFFFF",
+    base: "#F2F1ED",
+    deep: "#DAD6C8",
+    patch: "#FFF9E9",
+    patchDeep: "#EEE4C8",
+  },
+  gray: {
+    light: "#FAFAFC",
+    base: "#D8D6DE",
+    deep: "#B3AFBC",
+    patch: "#FFFFFF",
+    patchDeep: "#E8E5EC",
   },
 }
 

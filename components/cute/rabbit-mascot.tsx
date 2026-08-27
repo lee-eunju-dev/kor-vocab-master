@@ -16,7 +16,7 @@ type RabbitExpression =
   | "cheer"
   | "think"
   | "sad"
-type RabbitTone = "pink"
+type RabbitTone = "pink" | "gray" | "brown"
 
 const TONE_STOPS: Record<
   RabbitTone,
@@ -28,6 +28,20 @@ const TONE_STOPS: Record<
     deep: "#EFC9DC",
     patch: "#FFFFFF",
     patchDeep: "#F3E2EC",
+  },
+  gray: {
+    light: "#FBFAFD",
+    base: "#DCD7E6",
+    deep: "#B7AFC9",
+    patch: "#FFFFFF",
+    patchDeep: "#EDE9F2",
+  },
+  brown: {
+    light: "#FFF6EC",
+    base: "#E3BE95",
+    deep: "#C79662",
+    patch: "#FFF9EF",
+    patchDeep: "#F0DEC2",
   },
 }
 
