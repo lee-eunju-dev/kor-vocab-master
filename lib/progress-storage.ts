@@ -19,7 +19,7 @@ export interface StageResult {
   totalPoints: number
 }
 
-const STORAGE_KEY = "kor-vocab-master:progress:v3"
+const STORAGE_KEY = "kor-vocab-master:progress:v4"
 const EMPTY_PROGRESS: Progress = { stagesCleared: {}, points: 0 }
 
 // loadProgress()가 매번 새 객체를 만들면 useSyncExternalStore가 값이 바뀐 줄 알고
