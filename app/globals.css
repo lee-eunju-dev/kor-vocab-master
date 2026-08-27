@@ -26,6 +26,17 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-ink: var(--ink);
+  --color-sky-top: var(--sky-top);
+  --color-sky-mid: var(--sky-mid);
+  --color-grass: var(--grass);
+  --color-grass-deep: var(--grass-deep);
+  --color-stone: var(--stone);
+  --color-stone-deep: var(--stone-deep);
+  --shadow-chunky-xs: 0 2px 0 0 var(--border);
+  --shadow-chunky-sm: 0 3px 0 0 var(--border);
+  --shadow-chunky: 0 5px 0 0 var(--border);
+  --shadow-chunky-ink: 0 10px 0 0 var(--ink-shadow);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -76,6 +87,15 @@
   --chart-3: oklch(0.9 0.05 60);
   --chart-4: oklch(0.75 0.09 280);
   --chart-5: oklch(0.8 0.1 90);
+  /* 장면 요소(마스코트 외곽선, 하늘, 잔디 섬) 공용 색 */
+  --ink: oklch(0.305 0.025 19);
+  --ink-shadow: oklch(0.305 0.025 19 / 0.16);
+  --sky-top: oklch(0.941 0.03 246.6);
+  --sky-mid: oklch(0.97 0.015 251.2);
+  --grass: oklch(0.904 0.084 129.9);
+  --grass-deep: oklch(0.812 0.114 133);
+  --stone: oklch(0.903 0.017 308.2);
+  --stone-deep: oklch(0.808 0.03 303);
   --radius: 1.05rem;
   --sidebar: oklch(0.9 0.05 165);
   --sidebar-foreground: oklch(0.3 0.05 165);
