@@ -31,7 +31,7 @@ export default function SettingsPage() {
             variant="ghost"
             size="icon-sm"
             className="rounded-full bg-card/80"
-            onClick={() => router.push("/chapters")}
+            onClick={() => router.push("/grades")}
             aria-label="뒤로가기"
           >
             <ChevronLeft className="size-4" />

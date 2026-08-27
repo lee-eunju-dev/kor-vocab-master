@@ -30,8 +30,8 @@ function ChapterTrailView({ chapterId }: { chapterId: number }) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-base font-extrabold">존재하지 않는 단원이에요</p>
-        <Button variant="cute" onClick={() => router.push("/chapters")}>
-          단원 목록으로
+        <Button variant="cute" onClick={() => router.push("/grades")}>
+          등급 선택으로
         </Button>
       </div>
     )
@@ -57,7 +57,7 @@ function ChapterTrailView({ chapterId }: { chapterId: number }) {
           variant="ghost"
           size="icon-sm"
           className="rounded-full border-2 border-border bg-card/90"
-          onClick={() => router.push("/chapters")}
+          onClick={() => router.push(`/grades/${chapter.grade}`)}
           aria-label="단원 목록으로"
         >
           <ChevronLeft className="size-4" />

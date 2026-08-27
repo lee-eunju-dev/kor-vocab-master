@@ -57,8 +57,8 @@ function StagePlayView({ stageId }: { stageId: number }) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-base font-extrabold">존재하지 않는 Stage예요</p>
-        <Button variant="cute" onClick={() => router.push("/chapters")}>
-          단원 목록으로
+        <Button variant="cute" onClick={() => router.push("/grades")}>
+          등급 선택으로
         </Button>
       </div>
     )
