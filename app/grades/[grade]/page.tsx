@@ -89,8 +89,7 @@ function GradeChapterListView({ gradeParam }: { gradeParam: string }) {
         ) : (
           <div className="flex flex-col gap-3">
             {pagedChapters.map((chapter) => {
-              const stageIds = chapter.stages.map((stage) => stage.id)
-              const stats = chapterProgress(progress, stageIds)
+              const stats = chapterProgress(progress, chapter.stages)
               const percent = stats.totalStages === 0 ? 0 : (stats.clearedStages / stats.totalStages) * 100
 
               return (

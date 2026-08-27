@@ -31,8 +31,26 @@ describe("어휘 데이터", () => {
     }
   })
 
-  it("Stage 번호는 1부터 빈틈 없이 이어진다", () => {
-    expect(STAGES.map((stage) => stage.id)).toEqual(STAGES.map((_, i) => i + 1))
+  it("모든 Stage id는 유일하다", () => {
+    const ids = STAGES.map((stage) => stage.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it("Stage id는 소속 챕터의 id로 시작한다", () => {
+    // Stage id = chapterId * 100 + 챕터 안 순번. 새 챕터를 어디에 추가해도
+    // 기존 Stage id가 안 바뀌게 하려고 챕터 고유 id에서 계산한다.
+    for (const stage of STAGES) {
+      expect(Math.floor(stage.id / 100)).toBe(stage.chapterId)
+    }
+  })
+
+  it("prevStageId·nextStageId가 화면 노출 순서와 서로 맞물린다", () => {
+    for (let i = 0; i < STAGES.length; i++) {
+      const expectedPrev = i > 0 ? STAGES[i - 1].id : null
+      const expectedNext = i < STAGES.length - 1 ? STAGES[i + 1].id : null
+      expect(STAGES[i].prevStageId).toBe(expectedPrev)
+      expect(STAGES[i].nextStageId).toBe(expectedNext)
+    }
   })
 
   it("Stage의 chapterId가 실제로 그 챕터를 가리킨다", () => {
@@ -57,7 +75,7 @@ describe("어휘 데이터", () => {
   })
 
   it("getStage는 없는 번호에 undefined를 준다", () => {
-    expect(getStage(STAGES.length + 1)).toBeUndefined()
+    expect(getStage(999999)).toBeUndefined()
     expect(getStage(0)).toBeUndefined()
   })
 })

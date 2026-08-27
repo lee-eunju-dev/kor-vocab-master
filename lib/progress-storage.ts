@@ -19,7 +19,7 @@ export interface StageResult {
   totalPoints: number
 }
 
-const STORAGE_KEY = "kor-vocab-master:progress:v4"
+const STORAGE_KEY = "kor-vocab-master:progress:v5"
 const EMPTY_PROGRESS: Progress = { stagesCleared: {}, points: 0 }
 
 // loadProgress()가 매번 새 객체를 만들면 useSyncExternalStore가 값이 바뀐 줄 알고
@@ -69,9 +69,14 @@ export function useProgress(): Progress {
   return useSyncExternalStore(subscribe, loadProgress, getServerSnapshot)
 }
 
-export function isStageUnlocked(progress: Progress, stageId: number): boolean {
-  if (stageId <= 1) return true
-  return Boolean(progress.stagesCleared[stageId - 1]?.cleared)
+/**
+ * prevStageId는 논리적 진행 순서상 바로 앞 Stage의 id다(data/vocab-stages.ts의
+ * Stage.prevStageId). Stage id 자체의 산술적 크기에 기대지 않는다 — id는 챕터
+ * 고유 id 기반이라 연속된 정수가 아니다.
+ */
+export function isStageUnlocked(progress: Progress, prevStageId: number | null): boolean {
+  if (prevStageId === null) return true
+  return Boolean(progress.stagesCleared[prevStageId]?.cleared)
 }
 
 export interface ChapterProgress {
@@ -85,17 +90,20 @@ export interface ChapterProgress {
 }
 
 /** 챕터 목록에서 보여줄 진행률을 계산한다. */
-export function chapterProgress(progress: Progress, stageIds: number[]): ChapterProgress {
-  const clearedStages = stageIds.filter((id) => progress.stagesCleared[id]?.cleared).length
-  const stars = stageIds.reduce((sum, id) => sum + (progress.stagesCleared[id]?.stars ?? 0), 0)
+export function chapterProgress(
+  progress: Progress,
+  stages: { id: number; prevStageId: number | null }[]
+): ChapterProgress {
+  const clearedStages = stages.filter((s) => progress.stagesCleared[s.id]?.cleared).length
+  const stars = stages.reduce((sum, s) => sum + (progress.stagesCleared[s.id]?.stars ?? 0), 0)
 
   return {
     clearedStages,
-    totalStages: stageIds.length,
+    totalStages: stages.length,
     stars,
-    maxStars: stageIds.length * 3,
-    unlocked: stageIds.some((id) => isStageUnlocked(progress, id)),
-    done: stageIds.length > 0 && clearedStages === stageIds.length,
+    maxStars: stages.length * 3,
+    unlocked: stages.some((s) => isStageUnlocked(progress, s.prevStageId)),
+    done: stages.length > 0 && clearedStages === stages.length,
   }
 }
 

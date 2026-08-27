@@ -12,7 +12,7 @@ import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { SpeechBubble } from "@/components/cute/speech-bubble"
 import { StarRating } from "@/components/cute/star-rating"
 import { cn } from "@/lib/utils"
-import { getStage, STAGES } from "@/data/vocab-stages"
+import { getStage } from "@/data/vocab-stages"
 import { recordStageResult, type StageResult } from "@/lib/progress-storage"
 
 type Phase = "playing" | "feedback" | "result"
@@ -101,7 +101,7 @@ function StagePlayView({ stageId }: { stageId: number }) {
     }
   }
 
-  const hasNextStage = STAGES.some((s) => s.id === stageId + 1)
+  const hasNextStage = stage.nextStageId !== null
 
   return (
     <div className="relative flex flex-1 flex-col px-4 pt-5 pb-6">
@@ -221,7 +221,11 @@ function StagePlayView({ stageId }: { stageId: number }) {
               )}
               <div className="flex w-full flex-col gap-2">
                 {hasNextStage && (
-                  <Button variant="cute" className="w-full" onClick={() => router.push(`/stages/${stageId + 1}`)}>
+                  <Button
+                    variant="cute"
+                    className="w-full"
+                    onClick={() => router.push(`/stages/${stage.nextStageId}`)}
+                  >
                     다음 Stage
                   </Button>
                 )}

@@ -39,8 +39,8 @@ function ChapterTrailView({ chapterId }: { chapterId: number }) {
 
   const { width, height, points } = trailLayout(chapter.stages.length)
 
-  const handleSelect = (stageId: number) => {
-    if (isStageUnlocked(progress, stageId)) {
+  const handleSelect = (stageId: number, prevStageId: number | null) => {
+    if (isStageUnlocked(progress, prevStageId)) {
       router.push(`/stages/${stageId}`)
     } else {
       setLockedStageId(stageId)
@@ -78,7 +78,7 @@ function ChapterTrailView({ chapterId }: { chapterId: number }) {
 
         {chapter.stages.map((stage, i) => {
           const record = progress.stagesCleared[stage.id]
-          const unlocked = isStageUnlocked(progress, stage.id)
+          const unlocked = isStageUnlocked(progress, stage.prevStageId)
           const state: IslandState = record?.cleared ? "cleared" : unlocked ? "current" : "locked"
           const point = points[i]
 
@@ -86,7 +86,7 @@ function ChapterTrailView({ chapterId }: { chapterId: number }) {
             <button
               key={stage.id}
               type="button"
-              onClick={() => handleSelect(stage.id)}
+              onClick={() => handleSelect(stage.id, stage.prevStageId)}
               className="absolute -translate-x-1/2 -translate-y-1/2 transition-transform active:scale-95"
               style={{ left: point.x, top: point.y }}
               aria-label={`Stage ${stage.id}${

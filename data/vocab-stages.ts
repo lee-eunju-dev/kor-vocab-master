@@ -55,33 +55,53 @@ function buildQuestion(index: number): Question {
   }
 }
 
-// 챕터별로 단어를 10개씩 끊어 Stage를 만들고, Stage 번호는 전체에 걸쳐 1부터 이어 붙인다.
+// 챕터별로 단어를 10개씩 끊어 Stage를 만든다.
+//
+// Stage id는 챕터 고유 id(source.id) 기반으로 계산한다(예: 챕터 3의 3번째
+// Stage는 303). 그래서 CHAPTER_SOURCES 배열에서 챕터의 "위치"가 바뀌거나 새
+// 챕터가 어디에 끼어들어도, 기존 챕터의 Stage id는 절대 바뀌지 않는다 — 이미
+// 기기에 저장된 클리어 기록이 엉뚱한 Stage에 붙는 일이 없다.
+//
+// 반면 "순차 잠금"과 "다음 Stage로 이동"에 쓰는 논리적 순서(prevStageId,
+// nextStageId)는 CHAPTER_SOURCES 배열 순서(=화면 노출 순서) 그대로 따른다.
+// 그래서 새 챕터를 중간에 끼우면 그 뒤 챕터들이 열리는 순서는 바뀔 수 있지만,
+// 그건 저장된 기록이 깨지는 것과는 다른, 훨씬 가벼운 변화다. 새 챕터는 항상
+// 각 등급 목록의 맨 끝에 추가하는 편이 이런 순서 변화조차 없어 가장 안전하다.
 //
 // 10개로 채워지지 않는 남는 단어는 Stage로 만들지 않는다. 스펙이 "Stage 진입 시
 // 문제는 항상 10개"를 보장하므로, 문제가 3개뿐인 Stage를 만들면 안 된다.
 // 따라서 각 챕터의 words는 10의 배수로 채워야 하고, 아니면 남는 단어는 버려진다.
 function buildChapters(): Chapter[] {
   let wordCursor = 0
-  let stageNumber = 0
+  const stagesInOrder: Stage[] = []
 
-  return CHAPTER_SOURCES.map((source, chapterIndex) => {
-    const chapterId = chapterIndex + 1
+  const chapters = CHAPTER_SOURCES.map((source) => {
     const stageCount = Math.floor(source.words.length / QUESTIONS_PER_STAGE)
 
     const stages: Stage[] = Array.from({ length: stageCount }, (_, stageIndex) => {
-      stageNumber += 1
       const start = wordCursor + stageIndex * QUESTIONS_PER_STAGE
-      return {
-        id: stageNumber,
-        chapterId,
+      const stage: Stage = {
+        id: source.id * 100 + stageIndex + 1,
+        chapterId: source.id,
         questions: Array.from({ length: QUESTIONS_PER_STAGE }, (_, i) => buildQuestion(start + i)),
+        prevStageId: null,
+        nextStageId: null,
       }
+      stagesInOrder.push(stage)
+      return stage
     })
 
     wordCursor += source.words.length
 
-    return { id: chapterId, title: source.title, grade: source.grade, stages }
+    return { id: source.id, title: source.title, grade: source.grade, stages }
   })
+
+  for (let i = 0; i < stagesInOrder.length; i++) {
+    stagesInOrder[i].prevStageId = i > 0 ? stagesInOrder[i - 1].id : null
+    stagesInOrder[i].nextStageId = i < stagesInOrder.length - 1 ? stagesInOrder[i + 1].id : null
+  }
+
+  return chapters
 }
 
 /** 10개로 못 채워 Stage에 들어가지 못한 단어 수. 데이터 채울 때 확인용. */

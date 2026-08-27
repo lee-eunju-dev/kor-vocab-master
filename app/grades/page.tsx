@@ -45,8 +45,8 @@ export default function GradeListPage() {
             const chapters = CHAPTERS.filter((chapter) => chapter.grade === grade)
             if (chapters.length === 0) return null
 
-            const stageIds = chapters.flatMap((chapter) => chapter.stages.map((stage) => stage.id))
-            const stats = chapterProgress(progress, stageIds)
+            const stages = chapters.flatMap((chapter) => chapter.stages)
+            const stats = chapterProgress(progress, stages)
             const percent = stats.totalStages === 0 ? 0 : (stats.clearedStages / stats.totalStages) * 100
 
             return (
