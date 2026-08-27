@@ -76,7 +76,7 @@ export default function DesignPreviewPage() {
                 <h2 className="text-3xl font-extrabold text-primary-foreground [-webkit-text-stroke:3px_var(--card)] [paint-order:stroke]">
                   어휘 냥냥
                 </h2>
-                <p className="mt-2 text-xs font-bold text-muted-foreground">퀴즈 풀고 냥이 모으기</p>
+                <p className="mt-2 text-xs font-bold text-muted-foreground">퀴즈 풀고 친구 모으기</p>
               </div>
 
               <CatMascot expression="happy" float className="size-32" />

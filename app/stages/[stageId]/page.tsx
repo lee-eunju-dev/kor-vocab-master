@@ -5,15 +5,16 @@ import { useParams, useRouter } from "next/navigation"
 import { Check, PawPrint, Sparkle, Star, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { CatMascot } from "@/components/cute/cat-mascot"
 import { ChuBadge } from "@/components/cute/chu-badge"
+import { CreatureMascot } from "@/components/cute/creature-mascot"
 import { CuteCard } from "@/components/cute/cute-card"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { SpeechBubble } from "@/components/cute/speech-bubble"
 import { StarRating } from "@/components/cute/star-rating"
 import { cn } from "@/lib/utils"
 import { getStage } from "@/data/vocab-stages"
-import { recordStageResult, type StageResult } from "@/lib/progress-storage"
+import { DEFAULT_CREATURE_ID } from "@/lib/creatures"
+import { recordStageResult, useSelectedCreatureId, type StageResult } from "@/lib/progress-storage"
 
 type Phase = "playing" | "feedback" | "result"
 
@@ -44,6 +45,7 @@ export default function StagePlayPage() {
 function StagePlayView({ stageId }: { stageId: number }) {
   const router = useRouter()
   const stage = getStage(stageId)
+  const creatureId = useSelectedCreatureId(DEFAULT_CREATURE_ID)
 
   const [questionIndex, setQuestionIndex] = useState(0)
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null)
@@ -136,7 +138,7 @@ function StagePlayView({ stageId }: { stageId: number }) {
             </div>
 
             <div className="mb-2 flex justify-center">
-              <CatMascot expression="think" className="size-24" />
+              <CreatureMascot creatureId={creatureId} expression="think" className="size-24" />
             </div>
 
             <SpeechBubble className="mb-6">
@@ -179,9 +181,9 @@ function StagePlayView({ stageId }: { stageId: number }) {
         {phase === "feedback" && (
           <div className="fixed inset-0 z-10 flex items-center justify-center bg-foreground/35 px-6">
             <CuteCard className="flex w-full max-w-xs flex-col items-center gap-2 text-center">
-              <CatMascot
+              <CreatureMascot
+                creatureId={creatureId}
                 expression={isCorrect ? "cheer" : "sad"}
-                tone={isCorrect ? "orange" : "gray"}
                 float={isCorrect}
                 className="size-24"
               />
@@ -209,7 +211,12 @@ function StagePlayView({ stageId }: { stageId: number }) {
             </div>
 
             <CuteCard className="relative z-10 flex w-full max-w-xs flex-col items-center gap-3 text-center">
-              <CatMascot expression={result.stars >= 3 ? "crown" : "cheer"} float className="size-32" />
+              <CreatureMascot
+                creatureId={creatureId}
+                expression={result.stars >= 3 ? "crown" : "cheer"}
+                float
+                className="size-32"
+              />
               <p className="text-xl font-extrabold">{resultCopy(result.stars)}</p>
               <StarRating count={result.stars} />
               {result.isFirstClear ? (
@@ -250,7 +257,7 @@ function StagePlayView({ stageId }: { stageId: number }) {
         {paused && phase !== "result" && (
           <div className="fixed inset-0 z-20 flex items-center justify-center bg-foreground/35 px-6">
             <CuteCard className="flex w-full max-w-xs flex-col items-center gap-3 text-center">
-              <CatMascot expression="neutral" className="size-24" />
+              <CreatureMascot creatureId={creatureId} expression="neutral" className="size-24" />
               <p className="text-lg font-extrabold">잠시 쉬어갈까요?</p>
               <p className="-mt-2 text-xs text-muted-foreground">지금 나가면 이 Stage는 처음부터 다시 풀어야 해요</p>
               <div className="flex w-full flex-col gap-2">

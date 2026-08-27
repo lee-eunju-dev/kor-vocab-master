@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "어휘 냥냥",
-  description: "퀴즈 풀고 냥이 모으는 국어 어휘 앱",
+  description: "퀴즈 풀고 친구 모으는 국어 어휘 앱",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

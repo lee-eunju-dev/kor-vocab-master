@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft, RotateCcw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { CatMascot } from "@/components/cute/cat-mascot"
+import { CreatureMascot } from "@/components/cute/creature-mascot"
 import { CuteCard } from "@/components/cute/cute-card"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
-import { resetProgress } from "@/lib/progress-storage"
+import { DEFAULT_CREATURE_ID } from "@/lib/creatures"
+import { resetProgress, useSelectedCreatureId } from "@/lib/progress-storage"
 
 export default function SettingsPage() {
   const router = useRouter()
+  const creatureId = useSelectedCreatureId(DEFAULT_CREATURE_ID)
   const [confirming, setConfirming] = useState(false)
   const [justReset, setJustReset] = useState(false)
 
@@ -64,7 +66,7 @@ export default function SettingsPage() {
             className="flex w-full max-w-xs flex-col items-center gap-2 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <CatMascot expression="sad" tone="gray" className="size-24" />
+            <CreatureMascot creatureId={creatureId} expression="sad" className="size-24" />
             <p className="text-base font-extrabold">정말 초기화할까요?</p>
             <p className="-mt-1 text-xs text-muted-foreground">클리어 기록과 츄 포인트를 되돌릴 수 없어요.</p>
             <div className="mt-1 flex w-full flex-col gap-2">

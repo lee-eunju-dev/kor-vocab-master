@@ -10,6 +10,11 @@ export interface StageRecord {
 export interface Progress {
   stagesCleared: Record<number, StageRecord>
   points: number
+  /** 구매한 동물 캐릭터 id 목록 (lib/creatures.ts의 CreatureDef.id). 기본 오렌지
+   *  고양이(DEFAULT_CREATURE_ID)는 여기 없어도 항상 보유한 것으로 취급한다. */
+  ownedCreatures: string[]
+  /** 앱 전체 마스코트로 쓰는 대표 캐릭터. null이면 기본 오렌지 고양이. */
+  selectedCreature: string | null
 }
 
 export interface StageResult {
@@ -19,10 +24,15 @@ export interface StageResult {
   totalPoints: number
 }
 
-// v7: 초등 어휘를 9개 단원(450단어)으로 확장하면서 Stage 구성이 다시 바뀌어
-// 기록을 새로 시작한다 (docs/specs/elementary-vocab-grade/spec.md 참고).
-const STORAGE_KEY = "kor-vocab-master:progress:v7"
-const EMPTY_PROGRESS: Progress = { stagesCleared: {}, points: 0 }
+// v8: 동물 도감·상점(docs/specs/creature-collection/spec.md)에서 구매 목록과
+// 대표 캐릭터 선택을 저장하기 위해 필드를 추가했다.
+const STORAGE_KEY = "kor-vocab-master:progress:v8"
+const EMPTY_PROGRESS: Progress = {
+  stagesCleared: {},
+  points: 0,
+  ownedCreatures: [],
+  selectedCreature: null,
+}
 
 // loadProgress()가 매번 새 객체를 만들면 useSyncExternalStore가 값이 바뀐 줄 알고
 // 계속 리렌더링을 일으킨다. 그래서 localStorage에 실제로 쓸 때만 캐시를 갱신한다.
@@ -38,6 +48,8 @@ function readFromStorage(): Progress {
     return {
       stagesCleared: parsed.stagesCleared ?? {},
       points: parsed.points ?? 0,
+      ownedCreatures: parsed.ownedCreatures ?? [],
+      selectedCreature: parsed.selectedCreature ?? null,
     }
   } catch {
     return EMPTY_PROGRESS
@@ -69,6 +81,12 @@ function getServerSnapshot(): Progress {
 /** 진행 상황(Stage 클리어·별점·포인트)을 읽고, 변경되면 자동으로 리렌더링되는 훅. */
 export function useProgress(): Progress {
   return useSyncExternalStore(subscribe, loadProgress, getServerSnapshot)
+}
+
+/** 앱 전체 마스코트로 쓸 대표 캐릭터 id. 고른 적이 없으면 기본 오렌지 고양이. */
+export function useSelectedCreatureId(defaultId: string): string {
+  const progress = useProgress()
+  return progress.selectedCreature ?? defaultId
 }
 
 /**
@@ -129,6 +147,7 @@ export function recordStageResult(stageId: number, correctCount: number): StageR
   const pointsEarned = isFirstClear ? points : 0
 
   const nextProgress: Progress = {
+    ...progress,
     stagesCleared: {
       ...progress.stagesCleared,
       [stageId]: { cleared: true, stars: nextStars },
@@ -143,4 +162,32 @@ export function recordStageResult(stageId: number, correctCount: number): StageR
 
 export function resetProgress(): void {
   saveProgress(EMPTY_PROGRESS)
+}
+
+/**
+ * 동물 캐릭터를 구매한다. 이미 보유했거나 츄가 부족하면 아무 일도 하지 않고
+ * false를 반환한다 (상점 화면은 이 값으로 구매 버튼 상태를 정한다).
+ */
+export function purchaseCreature(creatureId: string, price: number): boolean {
+  const progress = loadProgress()
+  if (progress.ownedCreatures.includes(creatureId)) return false
+  if (progress.points < price) return false
+
+  saveProgress({
+    ...progress,
+    points: progress.points - price,
+    ownedCreatures: [...progress.ownedCreatures, creatureId],
+  })
+  return true
+}
+
+export function isCreatureOwned(progress: Progress, creatureId: string, defaultId: string): boolean {
+  return creatureId === defaultId || progress.ownedCreatures.includes(creatureId)
+}
+
+/** 보유한 캐릭터만 대표로 고를 수 있다. */
+export function selectCreature(creatureId: string, defaultId: string): void {
+  const progress = loadProgress()
+  if (!isCreatureOwned(progress, creatureId, defaultId)) return
+  saveProgress({ ...progress, selectedCreature: creatureId })
 }

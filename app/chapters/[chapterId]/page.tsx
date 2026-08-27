@@ -5,14 +5,15 @@ import { useParams, useRouter } from "next/navigation"
 import { ChevronLeft, Lock, PawPrint } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { CatMascot } from "@/components/cute/cat-mascot"
+import { CreatureMascot } from "@/components/cute/creature-mascot"
 import { CuteCard } from "@/components/cute/cute-card"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { StageIsland, type IslandState } from "@/components/cute/stage-island"
 import { StageTrail, trailLayout } from "@/components/cute/stage-trail"
 import { getChapter } from "@/data/vocab-stages"
+import { DEFAULT_CREATURE_ID } from "@/lib/creatures"
 import { GRADE_LABEL } from "@/lib/quiz-types"
-import { isStageUnlocked, useProgress } from "@/lib/progress-storage"
+import { isStageUnlocked, useProgress, useSelectedCreatureId } from "@/lib/progress-storage"
 
 export default function ChapterTrailPage() {
   const params = useParams<{ chapterId: string }>()
@@ -22,6 +23,7 @@ export default function ChapterTrailPage() {
 function ChapterTrailView({ chapterId }: { chapterId: number }) {
   const router = useRouter()
   const progress = useProgress()
+  const creatureId = useSelectedCreatureId(DEFAULT_CREATURE_ID)
   const [lockedStageId, setLockedStageId] = useState<number | null>(null)
 
   const chapter = getChapter(chapterId)
@@ -99,8 +101,9 @@ function ChapterTrailView({ chapterId }: { chapterId: number }) {
           )
         })}
 
-        {/* 길 끝에서 응원하는 고양이 */}
-        <CatMascot
+        {/* 길 끝에서 응원하는 대표 동물 */}
+        <CreatureMascot
+          creatureId={creatureId}
           expression="wave"
           float
           className="absolute size-20"

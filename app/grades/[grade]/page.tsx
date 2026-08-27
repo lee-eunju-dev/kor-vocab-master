@@ -5,13 +5,14 @@ import { useParams, useRouter } from "next/navigation"
 import { Check, ChevronLeft, ChevronRight, Lock, PawPrint, Settings, Star } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { CatMascot } from "@/components/cute/cat-mascot"
+import { CreatureMascot } from "@/components/cute/creature-mascot"
 import { CuteCard } from "@/components/cute/cute-card"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { cn } from "@/lib/utils"
 import { CHAPTERS } from "@/data/vocab-stages"
+import { DEFAULT_CREATURE_ID } from "@/lib/creatures"
 import { GRADE_LABEL, type Grade } from "@/lib/quiz-types"
-import { chapterProgress, useProgress } from "@/lib/progress-storage"
+import { chapterProgress, useProgress, useSelectedCreatureId } from "@/lib/progress-storage"
 
 function isGrade(value: string): value is Grade {
   return value === "elementary" || value === "middle" || value === "high"
@@ -29,6 +30,7 @@ export default function GradeChapterListPage() {
 function GradeChapterListView({ gradeParam }: { gradeParam: string }) {
   const router = useRouter()
   const progress = useProgress()
+  const creatureId = useSelectedCreatureId(DEFAULT_CREATURE_ID)
   const [page, setPage] = useState(0)
 
   if (!isGrade(gradeParam)) {
@@ -182,7 +184,7 @@ function GradeChapterListView({ gradeParam }: { gradeParam: string }) {
         )}
 
         <div className="flex justify-center pt-6">
-          <CatMascot expression="wave" float className="size-24" />
+          <CreatureMascot creatureId={creatureId} expression="wave" float className="size-24" />
         </div>
       </div>
     </div>
