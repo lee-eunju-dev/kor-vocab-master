@@ -2,6 +2,7 @@ import { BookOpen, Check, ChevronLeft, Home, Lock, Music, RotateCcw, Settings, S
 
 import { Button } from "@/components/ui/button"
 import { CatMascot } from "@/components/cute/cat-mascot"
+import { DogMascot, type DogExpression } from "@/components/cute/dog-mascot"
 import { ChuBadge } from "@/components/cute/chu-badge"
 import { CuteCard } from "@/components/cute/cute-card"
 import { CuteSlider } from "@/components/cute/cute-slider"
@@ -17,6 +18,17 @@ const CHOICES = [
   { label: "확실한 증거", tone: "white" as const },
   { label: "악성할 수 있는", tone: "gray" as const },
   { label: "확실한 안적합", tone: "orange" as const },
+]
+
+const DOG_EXPRESSIONS: { expression: DogExpression; label: string }[] = [
+  { expression: "neutral", label: "neutral" },
+  { expression: "happy", label: "happy" },
+  { expression: "wink", label: "wink" },
+  { expression: "crown", label: "crown" },
+  { expression: "wave", label: "wave" },
+  { expression: "cheer", label: "cheer" },
+  { expression: "think", label: "think" },
+  { expression: "sad", label: "sad" },
 ]
 
 const CONFETTI = [
@@ -37,6 +49,22 @@ export default function DesignPreviewPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">전체 화면 UI 뼈대 미리보기</p>
         </header>
+
+        {/* 강아지 마스코트 검증 — creature-collection 스펙: 1종 1색(형태+8표정)을 먼저 완성해 화면에 붙여보는 단계 */}
+        <section className="mx-auto mb-10 max-w-3xl rounded-3xl border-4 border-border bg-card p-6">
+          <h2 className="mb-1 text-lg font-extrabold">강아지 마스코트 (시바댕댕이 · 크림 톤) — 8표정 검증</h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            CatMascot과 같은 8가지 표정을 새 DogMascot 컴포넌트로 그렸다. 형태·비율이 실제 화면에서 어색하지 않은지 확인하는 용도.
+          </p>
+          <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
+            {DOG_EXPRESSIONS.map(({ expression, label }) => (
+              <div key={expression} className="flex flex-col items-center gap-1.5">
+                <DogMascot expression={expression} className="size-16" />
+                <span className="text-[10px] font-bold text-muted-foreground">{label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 place-items-center gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {/* 타이틀 화면 */}
