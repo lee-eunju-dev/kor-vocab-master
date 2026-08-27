@@ -31,7 +31,7 @@ function StageIsland({ n, state, stars = 0, className, ...props }: StageIslandPr
         )}
       </div>
 
-      {/* 잔디 언덕 */}
+      {/* 잔디 언덕 — 번호 배지가 서 있는 발판 */}
       <svg viewBox="0 0 72 38" className="mt-1 h-11 w-[72px] drop-shadow-[0_4px_0_var(--ink-shadow)]">
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
@@ -48,13 +48,17 @@ function StageIsland({ n, state, stars = 0, className, ...props }: StageIslandPr
         />
       </svg>
 
-      {/* 번호 배지 — 언덕 색에 묻히지 않도록 밝은 바탕에 색 테두리를 쓴다 */}
+      {/* 번호 배지 — 이 컴포넌트에서 실제로 읽어야 할 정보(몇 번 Stage인지)는 이것 하나뿐이라,
+          가장 크고 진하게 그려서 눈에 먼저 들어오게 한다. 언덕과 겹치는 부분을 줄여서
+          (이전엔 절반 가까이 언덕에 파묻혀 있었다) 숫자가 잘리거나 묻혀 보이지 않게 했다.
+          벌판·언덕 색과 상관없이 도드라지도록 테두리는 다른 요소와 같은 굵은 잉크색을 쓰고,
+          상태 구분은 테두리색이 아니라 채움색으로 한다. */}
       <div
         className={cn(
-          "-mt-6 flex size-12 items-center justify-center rounded-full border-4 bg-card text-lg font-extrabold shadow-chunky-sm",
-          current && "scale-110 border-primary text-primary-foreground",
-          state === "cleared" && "border-secondary text-secondary-foreground",
-          locked && "border-muted-foreground/40 text-muted-foreground"
+          "-mt-5 flex size-14 items-center justify-center rounded-full border-4 border-[var(--ink)] bg-card text-xl font-extrabold shadow-chunky-sm",
+          current && "scale-110 bg-primary text-primary-foreground",
+          state === "cleared" && "bg-secondary text-secondary-foreground",
+          locked && "bg-muted-foreground/70 text-background"
         )}
       >
         {locked ? <Lock className="size-5" /> : n}
