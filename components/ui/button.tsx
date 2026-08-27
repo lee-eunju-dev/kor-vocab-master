@@ -18,6 +18,9 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        cute: "rounded-full border-4 border-b-[7px] border-primary-foreground/20 bg-primary text-primary-foreground font-bold hover:brightness-105 active:border-b-4 active:translate-y-[3px]",
+        cuteMint:
+          "rounded-full border-4 border-b-[7px] border-secondary-foreground/20 bg-secondary text-secondary-foreground font-bold hover:brightness-105 active:border-b-4 active:translate-y-[3px]",
       },
       size: {
         default:
