@@ -260,7 +260,7 @@ export const HIGH_CHAPTERS: ChapterSource[] = [
       // 매체 비평 심화
       { word: "편집", definition: "여러 자료를 모아 하나의 완성된 매체로 만듦" },
       { word: "알고리즘", definition: "어떤 문제를 해결하기 위한 절차와 방법" },
-      { word: "편식", definition: "어느 한쪽 정보만 골라서 받아들임" },
+      { word: "편식", definition: "음식을 가려 먹듯이 어느 한쪽 정보만 치우쳐 받아들임" },
       { word: "조작", definition: "어떤 일을 사실과 다르게 꾸며 냄" },
       { word: "진위", definition: "참과 거짓" },
       { word: "허위", definition: "거짓을 참인 것처럼 꾸밈" },
