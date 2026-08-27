@@ -6,7 +6,6 @@ import { ChuBadge } from "@/components/cute/chu-badge"
 import { CuteCard } from "@/components/cute/cute-card"
 import { CuteSlider } from "@/components/cute/cute-slider"
 import { PhoneFrame } from "@/components/cute/phone-frame"
-import { QuizMascotDemo } from "@/components/cute/quiz-mascot-demo"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { SpeechBubble } from "@/components/cute/speech-bubble"
 import { StageIsland } from "@/components/cute/stage-island"
@@ -159,7 +158,7 @@ export default function DesignPreviewPage() {
               </div>
 
               <div className="mb-3 flex justify-center">
-                <QuizMascotDemo />
+                <CatMascot expression="think" className="size-20" />
               </div>
 
               <SpeechBubble className="mb-5">

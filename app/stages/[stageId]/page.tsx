@@ -2,13 +2,12 @@
 
 import { useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Check, ChevronLeft, X } from "lucide-react"
+import { Check, PawPrint, Sparkle, Star, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { CatMascot, type CatTone } from "@/components/cute/cat-mascot"
+import { CatMascot } from "@/components/cute/cat-mascot"
 import { ChuBadge } from "@/components/cute/chu-badge"
 import { CuteCard } from "@/components/cute/cute-card"
-import { QuizCatMascot, type ReactionState } from "@/components/cute/quiz-cat-mascot"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { SpeechBubble } from "@/components/cute/speech-bubble"
 import { StarRating } from "@/components/cute/star-rating"
@@ -18,7 +17,15 @@ import { recordStageResult, type StageResult } from "@/lib/progress-storage"
 
 type Phase = "playing" | "feedback" | "result"
 
-const CHOICE_TONES: CatTone[] = ["orange", "white", "gray", "orange"]
+const CHOICE_LABELS = ["A", "B", "C", "D"]
+
+const CONFETTI = [
+  { left: "10%", top: "16%", color: "text-primary", rotate: "-rotate-12" },
+  { left: "84%", top: "12%", color: "text-secondary", rotate: "rotate-12" },
+  { left: "18%", top: "72%", color: "text-accent-foreground", rotate: "rotate-45" },
+  { left: "86%", top: "64%", color: "text-primary", rotate: "-rotate-6" },
+  { left: "50%", top: "6%", color: "text-secondary", rotate: "rotate-3" },
+]
 
 function resultCopy(stars: number): string {
   if (stars >= 3) return "참 잘했어요!"
@@ -60,7 +67,7 @@ function StagePlayView({ stageId }: { stageId: number }) {
   const question = stage.questions[questionIndex]
   const isCorrect = selectedChoice !== null && selectedChoice === question.answerIndex
   const isLastQuestion = questionIndex === stage.questions.length - 1
-  const reaction: ReactionState = phase === "feedback" ? (isCorrect ? "correct" : "wrong") : "idle"
+  const progressPercent = (questionIndex / stage.questions.length) * 100
 
   function resetRun() {
     setQuestionIndex(0)
@@ -97,39 +104,43 @@ function StagePlayView({ stageId }: { stageId: number }) {
   const hasNextStage = STAGES.some((s) => s.id === stageId + 1)
 
   return (
-    <div className="relative flex flex-1 flex-col px-4 pt-6 pb-6">
+    <div className="relative flex flex-1 flex-col px-4 pt-5 pb-6">
       <SkyBackdrop />
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         {phase !== "result" && (
           <div className={cn("flex flex-1 flex-col", phase === "feedback" && "opacity-40")}>
-            <div className="mb-2 flex items-center gap-3">
-              <div className="h-4 flex-1 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-secondary transition-all"
-                  style={{ width: `${(questionIndex / stage.questions.length) * 100}%` }}
-                />
-              </div>
-              <span className="text-xs font-bold text-muted-foreground">
-                {questionIndex + 1}/{stage.questions.length}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full bg-card/80"
+            {/* 진행 바 — 발자국이 앞으로 나아간다 */}
+            <div className="mb-4 flex items-center gap-3">
+              <button
+                type="button"
                 onClick={() => setPaused(true)}
                 aria-label="일시정지"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card/90 text-muted-foreground"
               >
-                <ChevronLeft className="size-4" />
-              </Button>
+                <span className="text-lg leading-none">×</span>
+              </button>
+              <div className="relative h-4 flex-1 rounded-full border-2 border-border bg-muted">
+                <div
+                  className="h-full rounded-full bg-secondary transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+                <PawPrint
+                  className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 text-primary-foreground transition-all duration-300"
+                  style={{ left: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="shrink-0 text-xs font-bold text-muted-foreground">
+                {questionIndex + 1}/{stage.questions.length}
+              </span>
             </div>
 
-            <div className="mb-3 flex justify-center">
-              <QuizCatMascot reaction={reaction} className="size-20" />
+            <div className="mb-2 flex justify-center">
+              <CatMascot expression="think" className="size-24" />
             </div>
 
-            <SpeechBubble className="mb-5">
-              <p className="text-base font-bold">{question.question}</p>
+            <SpeechBubble className="mb-6">
+              <p className="text-center text-base font-bold">{question.question}</p>
             </SpeechBubble>
 
             <div className="flex flex-col gap-2.5">
@@ -147,19 +158,17 @@ function StagePlayView({ stageId }: { stageId: number }) {
                     disabled={phase === "feedback"}
                     onClick={() => handleChoose(i)}
                     className={cn(
-                      "h-auto justify-start gap-2.5 px-3 py-2.5 text-left text-xs whitespace-normal",
+                      "h-auto justify-start gap-3 px-3 py-3 text-left text-sm whitespace-normal",
                       showAsCorrect && "ring-4 ring-secondary-foreground/30",
                       showAsWrong && "ring-4 ring-destructive/40"
                     )}
                   >
-                    <CatMascot
-                      expression={showAsCorrect ? "wink" : "neutral"}
-                      tone={CHOICE_TONES[i]}
-                      className="size-8 shrink-0"
-                    />
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-card/85 text-xs font-extrabold">
+                      {CHOICE_LABELS[i]}
+                    </span>
                     {choice}
-                    {showAsCorrect && <Check className="ml-auto size-4 shrink-0" />}
-                    {showAsWrong && <X className="ml-auto size-4 shrink-0 text-destructive" />}
+                    {showAsCorrect && <Check className="ml-auto size-5 shrink-0" />}
+                    {showAsWrong && <X className="ml-auto size-5 shrink-0 text-destructive" />}
                   </Button>
                 )
               })}
@@ -171,16 +180,17 @@ function StagePlayView({ stageId }: { stageId: number }) {
           <div className="fixed inset-0 z-10 flex items-center justify-center bg-foreground/35 px-6">
             <CuteCard className="flex w-full max-w-xs flex-col items-center gap-2 text-center">
               <CatMascot
-                expression={isCorrect ? "wink" : "neutral"}
+                expression={isCorrect ? "cheer" : "sad"}
                 tone={isCorrect ? "orange" : "gray"}
-                className="size-16"
+                float={isCorrect}
+                className="size-24"
               />
               <p className={cn("text-lg font-extrabold", isCorrect && "text-secondary-foreground")}>
-                {isCorrect ? "정답이에요!" : "괜찮아요, 다음엔 맞힐 거예요!"}
+                {isCorrect ? "정답이에요!" : "아쉬워요! 다음엔 맞힐 거예요"}
               </p>
               <p className="-mt-1 text-xs text-muted-foreground">{question.explanation}</p>
               <Button variant="cuteMint" className="mt-1 w-full" onClick={handleNext}>
-                다음 문제
+                {isLastQuestion ? "결과 보기" : "다음 문제"}
               </Button>
             </CuteCard>
           </div>
@@ -188,8 +198,18 @@ function StagePlayView({ stageId }: { stageId: number }) {
 
         {phase === "result" && result && (
           <div className="relative flex flex-1 items-center justify-center px-2">
-            <CuteCard className="flex w-full max-w-xs flex-col items-center gap-3 text-center">
-              <CatMascot expression={result.stars >= 3 ? "crown" : "happy"} float className="size-28" />
+            <div className="pointer-events-none absolute inset-0">
+              {CONFETTI.map((c, i) => (
+                <Star
+                  key={i}
+                  className={`absolute size-4 fill-current ${c.color} ${c.rotate}`}
+                  style={{ left: c.left, top: c.top }}
+                />
+              ))}
+            </div>
+
+            <CuteCard className="relative z-10 flex w-full max-w-xs flex-col items-center gap-3 text-center">
+              <CatMascot expression={result.stars >= 3 ? "crown" : "cheer"} float className="size-32" />
               <p className="text-xl font-extrabold">{resultCopy(result.stars)}</p>
               <StarRating count={result.stars} />
               {result.isFirstClear ? (
@@ -213,14 +233,17 @@ function StagePlayView({ stageId }: { stageId: number }) {
                 </Button>
               </div>
             </CuteCard>
+
+            <Sparkle className="absolute top-8 left-6 size-5 fill-primary text-primary-foreground/40" />
+            <Sparkle className="absolute right-6 bottom-16 size-4 fill-secondary text-secondary-foreground/40" />
           </div>
         )}
 
         {paused && phase !== "result" && (
           <div className="fixed inset-0 z-20 flex items-center justify-center bg-foreground/35 px-6">
             <CuteCard className="flex w-full max-w-xs flex-col items-center gap-3 text-center">
-              <CatMascot expression="neutral" className="size-16" />
-              <p className="text-lg font-extrabold">잠깐 쉴까요?</p>
+              <CatMascot expression="neutral" className="size-24" />
+              <p className="text-lg font-extrabold">잠시 쉬어갈까요?</p>
               <p className="-mt-2 text-xs text-muted-foreground">지금 나가면 이 Stage는 처음부터 다시 풀어야 해요</p>
               <div className="flex w-full flex-col gap-2">
                 <Button variant="cute" className="w-full" onClick={() => setPaused(false)}>
