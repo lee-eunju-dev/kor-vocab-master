@@ -23,7 +23,7 @@ export default function Home() {
       <CatMascot expression="wave" float className="size-48" />
 
       <div className="flex w-full max-w-xs flex-col items-center gap-3">
-        <Button variant="cute" className="w-full text-base" onClick={() => router.push("/stages")}>
+        <Button variant="cute" className="w-full text-base" onClick={() => router.push("/chapters")}>
           시작하기
         </Button>
         <p className="text-[11px] text-muted-foreground">v0.1 · 학습 진행 상황은 이 기기에만 저장돼요</p>

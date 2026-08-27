@@ -57,8 +57,8 @@ function StagePlayView({ stageId }: { stageId: number }) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-base font-extrabold">존재하지 않는 Stage예요</p>
-        <Button variant="cute" onClick={() => router.push("/stages")}>
-          Stage 목록으로
+        <Button variant="cute" onClick={() => router.push("/chapters")}>
+          단원 목록으로
         </Button>
       </div>
     )
@@ -228,8 +228,12 @@ function StagePlayView({ stageId }: { stageId: number }) {
                 <Button variant="cuteMint" className="w-full" onClick={resetRun}>
                   다시 도전!
                 </Button>
-                <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => router.push("/stages")}>
-                  Stage 목록으로
+                <Button
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  onClick={() => router.push(`/chapters/${stage.chapterId}`)}
+                >
+                  단원으로 돌아가기
                 </Button>
               </div>
             </CuteCard>
@@ -262,9 +266,9 @@ function StagePlayView({ stageId }: { stageId: number }) {
                 <Button
                   variant="ghost"
                   className="w-full text-muted-foreground"
-                  onClick={() => router.push("/stages")}
+                  onClick={() => router.push(`/chapters/${stage.chapterId}`)}
                 >
-                  Stage 목록으로 나가기
+                  단원으로 나가기
                 </Button>
               </div>
             </CuteCard>

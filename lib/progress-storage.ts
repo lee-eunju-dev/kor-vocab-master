@@ -74,6 +74,31 @@ export function isStageUnlocked(progress: Progress, stageId: number): boolean {
   return Boolean(progress.stagesCleared[stageId - 1]?.cleared)
 }
 
+export interface ChapterProgress {
+  clearedStages: number
+  totalStages: number
+  stars: number
+  maxStars: number
+  /** 챕터의 Stage 중 하나라도 열려 있으면 챕터가 열린 것으로 본다. */
+  unlocked: boolean
+  done: boolean
+}
+
+/** 챕터 목록에서 보여줄 진행률을 계산한다. */
+export function chapterProgress(progress: Progress, stageIds: number[]): ChapterProgress {
+  const clearedStages = stageIds.filter((id) => progress.stagesCleared[id]?.cleared).length
+  const stars = stageIds.reduce((sum, id) => sum + (progress.stagesCleared[id]?.stars ?? 0), 0)
+
+  return {
+    clearedStages,
+    totalStages: stageIds.length,
+    stars,
+    maxStars: stageIds.length * 3,
+    unlocked: stageIds.some((id) => isStageUnlocked(progress, id)),
+    done: stageIds.length > 0 && clearedStages === stageIds.length,
+  }
+}
+
 export function starsForCorrectCount(correctCount: number): number {
   if (correctCount >= 9) return 3
   if (correctCount >= 6) return 2

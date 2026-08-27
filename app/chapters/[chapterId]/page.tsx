@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Lock, PawPrint, Settings } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { ChevronLeft, Lock, PawPrint } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { CatMascot } from "@/components/cute/cat-mascot"
@@ -10,15 +10,34 @@ import { CuteCard } from "@/components/cute/cute-card"
 import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { StageIsland, type IslandState } from "@/components/cute/stage-island"
 import { StageTrail, trailLayout } from "@/components/cute/stage-trail"
-import { STAGES } from "@/data/vocab-stages"
+import { getChapter } from "@/data/vocab-stages"
+import { GRADE_LABEL } from "@/lib/quiz-types"
 import { isStageUnlocked, useProgress } from "@/lib/progress-storage"
 
-export default function StageListPage() {
+export default function ChapterTrailPage() {
+  const params = useParams<{ chapterId: string }>()
+  return <ChapterTrailView key={params.chapterId} chapterId={Number(params.chapterId)} />
+}
+
+function ChapterTrailView({ chapterId }: { chapterId: number }) {
   const router = useRouter()
   const progress = useProgress()
   const [lockedStageId, setLockedStageId] = useState<number | null>(null)
 
-  const { width, height, points } = trailLayout(STAGES.length)
+  const chapter = getChapter(chapterId)
+
+  if (!chapter) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-base font-extrabold">존재하지 않는 단원이에요</p>
+        <Button variant="cute" onClick={() => router.push("/chapters")}>
+          단원 목록으로
+        </Button>
+      </div>
+    )
+  }
+
+  const { width, height, points } = trailLayout(chapter.stages.length)
 
   const handleSelect = (stageId: number) => {
     if (isStageUnlocked(progress, stageId)) {
@@ -32,30 +51,32 @@ export default function StageListPage() {
     <div className="relative flex flex-1 flex-col px-4 pt-5 pb-8">
       <SkyBackdrop field />
 
-      {/* 상단 바 — 모은 츄와 설정 */}
-      <div className="mx-auto mb-2 flex w-full max-w-md items-center justify-between">
-        <h1 className="text-lg font-extrabold">스테이지</h1>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border-4 border-accent-foreground/15 bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-            <PawPrint className="size-3.5" />내 츄 {progress.points}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="rounded-full border-2 border-border bg-card/90"
-            onClick={() => router.push("/settings")}
-            aria-label="설정"
-          >
-            <Settings className="size-4" />
-          </Button>
+      {/* 상단 바 — 어느 단원인지 항상 보이게 둔다 */}
+      <div className="mx-auto mb-2 flex w-full max-w-md items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-full border-2 border-border bg-card/90"
+          onClick={() => router.push("/chapters")}
+          aria-label="단원 목록으로"
+        >
+          <ChevronLeft className="size-4" />
+        </Button>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-bold text-muted-foreground">{GRADE_LABEL[chapter.grade]}</p>
+          <h1 className="truncate text-base font-extrabold">{chapter.title}</h1>
         </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border-4 border-accent-foreground/15 bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
+          <PawPrint className="size-3.5" />
+          {progress.points}
+        </span>
       </div>
 
       {/* 오솔길 지도 */}
       <div className="relative mx-auto" style={{ width, height }}>
         <StageTrail points={points} width={width} height={height} />
 
-        {STAGES.map((stage, i) => {
+        {chapter.stages.map((stage, i) => {
           const record = progress.stagesCleared[stage.id]
           const unlocked = isStageUnlocked(progress, stage.id)
           const state: IslandState = record?.cleared ? "cleared" : unlocked ? "current" : "locked"
@@ -72,7 +93,8 @@ export default function StageListPage() {
                 record?.cleared ? ` 클리어, 별 ${record.stars}개` : unlocked ? " 플레이 가능" : " 잠김"
               }`}
             >
-              <StageIsland n={stage.id} state={state} stars={record?.stars ?? 0} />
+              {/* 챕터 안에서는 1부터 세는 순번을 보여준다 (전체 번호는 너무 커진다) */}
+              <StageIsland n={i + 1} state={state} stars={record?.stars ?? 0} />
             </button>
           )
         })}
@@ -99,9 +121,7 @@ export default function StageListPage() {
               <Lock className="size-5" />
             </div>
             <p className="text-base font-extrabold">아직 잠겨 있어요</p>
-            <p className="-mt-1 text-xs text-muted-foreground">
-              Stage {lockedStageId - 1}을 먼저 클리어하면 열려요
-            </p>
+            <p className="-mt-1 text-xs text-muted-foreground">앞 Stage를 먼저 클리어하면 열려요</p>
             <Button variant="cute" className="mt-1 w-full" onClick={() => setLockedStageId(null)}>
               확인
             </Button>
