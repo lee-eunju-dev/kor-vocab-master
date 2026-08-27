@@ -1,0 +1,1 @@
+- `app/stages/page.tsx`의 잠긴 Stage 안내 문구(`Stage {n}을 먼저 클리어하면...`)가 숫자 n에 따라 조사(을/를)가 안 맞을 수 있다(예: "Stage 2을", "Stage 4을"). `data/vocab-stages.ts`의 `hasFinalConsonant` 방식을 재사용해 고치면 된다. 스펙 인수 기준을 깨거나 주 경로를 막는 문제는 아니라 지금은 남겨둔다.
