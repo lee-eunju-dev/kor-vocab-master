@@ -1,0 +1,705 @@
+<!--
+  prototype shell: the review chrome every prototype starts from.
+
+  Keep this comment in the prototype you grow from here: it is the contract,
+  and later turns work from that file rather than from this one.
+
+  Contract (extend product screens; keep the review shell):
+  - Product:  .sh-stage contains only end-user product UI. Keep review notes,
+               rationale, instructions, and approval controls in conversation.
+  - Screens:  <section data-screen="slug" data-title="Label"> inside .sh-stage.
+               The selector, arrow keys, and #hash routing build themselves.
+               Use one option per product destination or distinct surface,
+               named by its product role. Keep baselines, variants, comparison
+               labels, steps, indexes, and progress out of names and states.
+               Links may use href="#slug".
+  - States:   "Default" is automatic. A screen declares only representative
+               presets in data-states="Empty,Error". Use natural, screen-specific
+               names. Reserve presets for important multi-step results, forced
+               data or errors, or materially different structure; keep one-click
+               and transient states as interactions. Use data-when="Empty" on
+               preset-only elements. Call prototypeShell.setState("Name") on
+               entry and setState("Default") on exit, including when repeated
+               actions cross a preset condition.
+  - Viewport: "vp (m)" cycles full / 390 / 768. The 390 preset is a
+               fixed-height, internally scrolling phone frame. Start a
+               mobile-first prototype by adding class="sh-vp-390" to <body>
+               (or a bootstrap classList.add before the chrome script runs).
+  - Pinning:  keep in-frame bars (tab bars, CTAs) inside the phone with
+               position: sticky; position: fixed pins to the browser window.
+  - Tokens:   replace the project-tokens block with project tokens copied
+               verbatim. Map differing names to --background, --foreground, and
+               --font afterwards; replace network fonts with a system stack and
+               note that substitution. Without a design system, keep this
+               palette as the finished style.
+  - Placeholders: .wf-pic stands in for pictures the prototype has no real
+               files for. Use real text everywhere text belongs.
+
+  - Chrome:   Keep exactly the screen selector, selected-screen state selector,
+               and viewport cycle. Chrome that needs explaining has failed.
+
+  Self-contained by design: no build, no framework, no network.
+-->
+<meta charset="utf-8">
+<title>동물 도감·상점 프로토타입</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ── project tokens: 어휘 냥냥 (docs/decisions/ui-design-system.md) ── */
+  :root {
+    --background: oklch(0.975 0.014 85);
+    --foreground: oklch(0.34 0.05 30);
+    --card: oklch(0.99 0.008 85);
+    --card-foreground: oklch(0.34 0.05 30);
+    --primary: oklch(0.83 0.09 10);
+    --primary-foreground: oklch(0.32 0.07 10);
+    --secondary: oklch(0.86 0.08 165);
+    --secondary-foreground: oklch(0.3 0.06 165);
+    --muted: oklch(0.95 0.02 85);
+    --muted-foreground: oklch(0.55 0.03 40);
+    --accent: oklch(0.9 0.05 60);
+    --accent-foreground: oklch(0.35 0.05 50);
+    --destructive: oklch(0.72 0.16 25);
+    --border: oklch(0.85 0.05 20);
+    --ink: oklch(0.305 0.025 19);
+    --sky-top: oklch(0.941 0.03 246.6);
+    --sky-mid: oklch(0.97 0.015 251.2);
+    --grass: oklch(0.904 0.084 129.9);
+    --grass-deep: oklch(0.812 0.114 133);
+    --radius: 1.05rem;
+    --font: "Noto Sans KR", "Inter", ui-sans-serif, system-ui, sans-serif; /* 네트워크 폰트 대신 시스템 스택으로 대체 */
+  }
+
+  /* ── review chrome (sh-*): keep; extend product styles elsewhere ── */
+  * { box-sizing: border-box }
+  body {
+    margin: 0; padding: 0 0 40px;
+    background: var(--background, #f6f6f6); color: var(--foreground, #3a3a3a);
+    font-family: var(--font, system-ui, sans-serif);
+  }
+  .sh-bar {
+    position: sticky; top: 0; z-index: 999;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 8px 12px; background: #191a1c; color: #d7d7d7;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .sh-bar b, .sh-control-label { color: #8a8f98; font-weight: 500 }
+  .sh-control { display: inline-flex; gap: 5px; align-items: center }
+  .sh-bar button {
+    border: 1px solid #3a3d42; background: none; color: inherit;
+    font: inherit; padding: 2px 9px; border-radius: 99px; cursor: pointer;
+  }
+  .sh-bar select {
+    width: 190px; border: 1px solid #3a3d42; background: #232428; color: inherit;
+    font: inherit; padding: 3px 28px 3px 9px; border-radius: 7px; cursor: pointer;
+    color-scheme: dark;
+  }
+  #sh-screen { width: 210px }
+  .sh-bar button.on { background: #d7d7d7; color: #191a1c; border-color: #d7d7d7 }
+  .sh-spacer { flex: 1 }
+  .sh-stage { max-width: 960px; margin: 0 auto; padding: 12px 16px 0 }
+  [hidden] { display: none !important }
+
+  /* viewport presets */
+  .sh-vp-390 .sh-stage {
+    max-width: 390px; background: var(--background, #f6f6f6);
+    border: 10px solid #191a1c; border-radius: 28px;
+    padding: 16px 12px; height: min(844px, calc(100dvh - 52px));
+    overflow-y: auto; margin-top: 12px;
+  }
+  .sh-vp-768 .sh-stage {
+    max-width: 768px; border: 1px solid #c4c4c4; border-radius: 12px;
+    padding: 16px; margin-top: 12px;
+  }
+
+  /* placeholders */
+  .wf-pic  { border-radius: 4px; background:
+             repeating-linear-gradient(45deg, #e9e9e9, #e9e9e9 6px, #f2f2f2 6px, #f2f2f2 12px) }
+
+  /* ══════════════════════ product styles ══════════════════════ */
+  .screen-body { position: relative; min-height: 560px; padding-bottom: 24px; }
+  .sh-vp-390 .screen-body { min-height: 0; }
+
+  .sky-bg {
+    position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit;
+    background: linear-gradient(to bottom, var(--sky-top), var(--sky-mid) 55%, var(--background) 100%);
+  }
+  .sky-bg.field::before {
+    content: ""; position: absolute; inset: 21% 0 0 0; background: var(--grass);
+  }
+
+  .topbar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .topbar h1 { flex: 1; min-width: 0; margin: 0; font-size: 1.05rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 999px; border: 2px solid var(--border);
+    background: color-mix(in oklch, var(--card) 90%, transparent); color: var(--foreground);
+    font-size: 1rem; cursor: pointer; flex-shrink: 0;
+  }
+  .chu-badge {
+    display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+    border: 4px solid color-mix(in oklch, var(--accent-foreground) 15%, transparent);
+    background: var(--accent); color: var(--accent-foreground);
+    padding: 5px 14px; font-weight: 800; font-size: 0.8rem; white-space: nowrap;
+  }
+
+  .card {
+    border-radius: 1.5rem; border: 4px solid var(--border); background: var(--card);
+    color: var(--card-foreground); padding: 1rem;
+    box-shadow: 0 5px 0 0 var(--border);
+  }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tab {
+    flex-shrink: 0; padding: 7px 16px; border-radius: 999px; border: 3px solid var(--border);
+    background: var(--card); font-weight: 700; font-size: 0.82rem; cursor: pointer; color: var(--foreground);
+  }
+  .tab.active { background: var(--primary); color: var(--primary-foreground); border-color: color-mix(in oklch, var(--primary-foreground) 20%, transparent); }
+
+  .shop-list { display: flex; flex-direction: column; gap: 10px; }
+  .shop-item { display: flex; align-items: center; gap: 12px; }
+  .shop-thumb {
+    width: 56px; height: 56px; border-radius: 999px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    border: 3px solid var(--border);
+  }
+  .shop-info { flex: 1; min-width: 0; }
+  .shop-name { font-weight: 800; font-size: 0.95rem; margin: 0 0 2px; }
+  .shop-desc { font-size: 0.72rem; color: var(--muted-foreground); margin: 0; }
+  .buy-btn {
+    flex-shrink: 0; border-radius: 999px; border: 4px solid color-mix(in oklch, var(--primary-foreground) 20%, transparent);
+    border-bottom-width: 7px; background: var(--primary); color: var(--primary-foreground);
+    font-weight: 800; font-size: 0.78rem; padding: 8px 14px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; line-height: 1.25;
+  }
+  .buy-btn:active { border-bottom-width: 4px; transform: translateY(3px); }
+  .buy-btn .price { display: flex; align-items: center; gap: 3px; }
+  .buy-btn.owned {
+    background: var(--muted); color: var(--muted-foreground); border-color: var(--border);
+    cursor: default;
+  }
+  .buy-btn.owned:active { border-bottom-width: 7px; transform: none; }
+  .buy-btn.disabled {
+    background: var(--muted); color: var(--muted-foreground); border-color: var(--border);
+    opacity: 0.6; cursor: not-allowed;
+  }
+  .buy-btn.disabled:active { border-bottom-width: 7px; transform: none; }
+
+  .dex-progress { margin-bottom: 14px; }
+  .dex-bar { height: 10px; border-radius: 999px; border: 2px solid var(--border); background: var(--muted); overflow: hidden; }
+  .dex-bar-fill { height: 100%; background: var(--secondary); border-radius: 999px; }
+  .dex-progress-label { font-size: 0.75rem; font-weight: 700; color: var(--muted-foreground); margin-top: 5px; }
+
+  .dex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .dex-cell {
+    aspect-ratio: 1; border-radius: 1.2rem; border: 3px solid var(--border); background: var(--card);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    cursor: pointer; padding: 6px; position: relative;
+  }
+  .dex-cell.representative { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 45%, transparent); }
+  .dex-cell .rep-badge {
+    position: absolute; top: -6px; right: -6px; background: var(--primary); color: var(--primary-foreground);
+    border-radius: 999px; padding: 2px 7px; font-size: 0.62rem; font-weight: 800; border: 2px solid var(--card);
+  }
+  .dex-cell .creature-thumb { width: 52px; height: 52px; }
+  .dex-cell .dex-name { font-size: 0.68rem; font-weight: 700; text-align: center; }
+  .dex-cell.locked { background: var(--muted); opacity: 0.75; }
+  .dex-cell.locked .lock-icon { font-size: 1.4rem; color: var(--muted-foreground); }
+  .dex-cell.locked .dex-name { color: var(--muted-foreground); }
+
+  .creature-thumb.wf-pic, .creature-thumb-lg.wf-pic { border-radius: 999px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; padding: 2px; }
+  .creature-thumb.wf-pic { font-size: 0.6rem; color: #b6b6b6; }
+  .creature-thumb-lg.wf-pic { font-size: 3.4rem; }
+
+  /* 도감 상세보기 모달 */
+  .modal-overlay {
+    position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+    background: color-mix(in oklch, var(--ink) 35%, transparent); padding: 24px; border-radius: inherit;
+  }
+  .modal-card {
+    width: 100%; max-width: 280px; border-radius: 1.5rem; border: 4px solid var(--border); background: var(--card);
+    padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+    box-shadow: 0 5px 0 0 var(--border);
+  }
+  .modal-card .creature-thumb-lg { width: 128px; height: 128px; }
+  .modal-card h3 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+  .modal-card .modal-sub { font-size: 0.78rem; color: var(--muted-foreground); margin: -4px 0 4px; }
+  .btn-cute {
+    width: 100%; border-radius: 999px; border: 4px solid color-mix(in oklch, var(--primary-foreground) 20%, transparent);
+    border-bottom-width: 7px; background: var(--primary); color: var(--primary-foreground);
+    font-weight: 800; font-size: 0.9rem; padding: 10px; cursor: pointer;
+  }
+  .btn-cute:active { border-bottom-width: 4px; transform: translateY(3px); }
+  .btn-cute.is-rep { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); cursor: default; }
+  .btn-cute.is-rep:active { border-bottom-width: 7px; transform: none; }
+  .btn-ghost { width: 100%; background: none; border: none; color: var(--muted-foreground); font-weight: 700; font-size: 0.82rem; padding: 6px; cursor: pointer; }
+
+  .close-x {
+    position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 999px;
+    border: 2px solid var(--border); background: color-mix(in oklch, var(--card) 90%, transparent);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem;
+  }
+
+  /* 대표 동물 반영 미리보기 화면들 */
+  .preview-note {
+    background: color-mix(in oklch, var(--accent) 55%, var(--card)); border: 2px dashed var(--accent-foreground);
+    border-radius: 1rem; padding: 10px 14px; font-size: 0.78rem; color: var(--accent-foreground); margin-bottom: 16px;
+  }
+  .grade-card { display: flex; align-items: center; gap: 14px; }
+  .grade-card .creature-thumb { width: 64px; height: 64px; }
+  .grade-title { font-size: 1.05rem; font-weight: 800; margin: 0; }
+  .grade-sub { font-size: 0.72rem; font-weight: 700; color: var(--muted-foreground); margin: 4px 0 0; }
+
+  .quiz-feedback-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: color-mix(in oklch, var(--ink) 35%, transparent); padding: 24px; border-radius: inherit;
+  }
+  .quiz-feedback-card {
+    width: 100%; max-width: 280px; border-radius: 1.5rem; border: 4px solid var(--border); background: var(--card);
+    padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+    box-shadow: 0 5px 0 0 var(--border);
+  }
+  .quiz-feedback-card .creature-thumb-lg { width: 96px; height: 96px; }
+  .quiz-feedback-card .result-title { font-size: 1.1rem; font-weight: 800; color: var(--secondary-foreground); margin: 0; }
+  .quiz-feedback-card .result-sub { font-size: 0.78rem; color: var(--muted-foreground); margin: 0; }
+
+  /* CatMascot SVG 실제 톤 */
+  .cat-orange .coat-stop-1 { stop-color: #FFFDF8 } .cat-orange .coat-stop-2 { stop-color: #FDF3E4 } .cat-orange .coat-stop-3 { stop-color: #F0DFC4 }
+  .cat-orange .patch-stop-1 { stop-color: #FBC98E } .cat-orange .patch-stop-2 { stop-color: #E9A055 }
+</style>
+
+<header class="sh-bar">
+  <b>proto</b>
+  <label class="sh-control"><span class="sh-control-label">screen</span><select id="sh-screen"></select></label>
+  <span class="sh-spacer"></span>
+  <label class="sh-control"><span class="sh-control-label">state</span><select id="sh-state"></select></label>
+  <button id="sh-vp">vp: full (m)</button>
+</header>
+
+<main class="sh-stage">
+
+  <!-- ══════════════════════ 화면 1: 상점·도감 (하나의 화면, 내부 탭으로 전환) ══════════════════════ -->
+  <section data-screen="shop-dex" data-title="상점·도감">
+    <div class="screen-body" style="position:relative">
+      <div class="sky-bg"></div>
+      <div class="topbar">
+        <button class="icon-btn" aria-label="등급 선택으로" onclick="prototypeShell.showScreen('home-preview')">‹</button>
+        <h1 id="shop-dex-title">동물 상점</h1>
+        <span class="chu-badge">🐾 84</span>
+      </div>
+
+      <div class="tabs" id="shop-dex-tabs" style="margin-bottom:12px">
+        <button class="tab active" onclick="switchShopDex('shop', this)">상점</button>
+        <button class="tab" onclick="switchShopDex('dex', this)">도감</button>
+      </div>
+
+      <!-- ── 상점 뷰 ── -->
+      <div id="view-shop">
+        <div class="tabs" id="shop-tabs">
+          <button class="tab active" data-species="all" onclick="filterShop(this)">전체</button>
+          <button class="tab" data-species="고양이" onclick="filterShop(this)">고양이</button>
+          <button class="tab" data-species="강아지" onclick="filterShop(this)">강아지</button>
+          <button class="tab" data-species="토끼" onclick="filterShop(this)">토끼</button>
+          <button class="tab" data-species="햄스터" onclick="filterShop(this)">햄스터</button>
+          <button class="tab" data-species="곰" onclick="filterShop(this)">곰</button>
+        </div>
+
+        <div class="card">
+          <div class="shop-list" id="shop-list">
+
+            <div class="shop-item" data-species="고양이">
+              <div class="shop-thumb" id="cat-orange-shop"></div>
+              <div class="shop-info">
+                <p class="shop-name">크림냥이</p>
+                <p class="shop-desc">고양이 · 오렌지 톤</p>
+              </div>
+              <button class="buy-btn owned">보유 중</button>
+            </div>
+
+            <div class="shop-item" data-species="고양이">
+              <div class="shop-thumb wf-pic" style="background:#F4E4D6">🐱</div>
+              <div class="shop-info">
+                <p class="shop-name">턱시도냥이</p>
+                <p class="shop-desc">고양이 · 그레이 톤</p>
+              </div>
+              <button class="buy-btn">
+                <span class="price">🐾 60</span>
+                구매
+              </button>
+            </div>
+
+            <div class="shop-item" data-species="고양이">
+              <div class="shop-thumb wf-pic" style="background:#F4E4D6">🐱</div>
+              <div class="shop-info">
+                <p class="shop-name">까망냥이</p>
+                <p class="shop-desc">고양이 · 화이트 톤</p>
+              </div>
+              <button class="buy-btn disabled">
+                <span class="price">🐾 120</span>
+                츄 부족
+              </button>
+            </div>
+
+            <div class="shop-item" data-species="강아지">
+              <div class="shop-thumb wf-pic" style="background:#EFE0D2">🐶</div>
+              <div class="shop-info">
+                <p class="shop-name">시바댕댕이</p>
+                <p class="shop-desc">강아지 · 크림 톤</p>
+              </div>
+              <button class="buy-btn">
+                <span class="price">🐾 70</span>
+                구매
+              </button>
+            </div>
+
+            <div class="shop-item" data-species="토끼">
+              <div class="shop-thumb wf-pic" style="background:#EFE0D2">🐰</div>
+              <div class="shop-info">
+                <p class="shop-name">눈송이토끼</p>
+                <p class="shop-desc">토끼 · 화이트 톤</p>
+              </div>
+              <button class="buy-btn">
+                <span class="price">🐾 80</span>
+                구매
+              </button>
+            </div>
+
+            <div class="shop-item" data-species="햄스터">
+              <div class="shop-thumb wf-pic" style="background:#EFE0D2">🐹</div>
+              <div class="shop-info">
+                <p class="shop-name">노랑햄찌</p>
+                <p class="shop-desc">햄스터 · 골든 톤</p>
+              </div>
+              <button class="buy-btn">
+                <span class="price">🐾 50</span>
+                구매
+              </button>
+            </div>
+
+            <div class="shop-item" data-species="곰">
+              <div class="shop-thumb wf-pic" style="background:#EFE0D2">🐻</div>
+              <div class="shop-info">
+                <p class="shop-name">꿀밤곰돌이</p>
+                <p class="shop-desc">곰 · 브라운 톤</p>
+              </div>
+              <button class="buy-btn">
+                <span class="price">🐾 90</span>
+                구매
+              </button>
+            </div>
+
+          </div>
+          <p id="shop-empty-note" class="shop-desc" style="display:none; text-align:center; padding:12px 0 4px">아직 이 종은 준비 중이에요.</p>
+        </div>
+      </div>
+
+      <!-- ── 도감 뷰 ── -->
+      <div id="view-dex" hidden>
+        <div class="dex-progress">
+          <div class="dex-bar"><div class="dex-bar-fill" style="width:26%"></div></div>
+          <p class="dex-progress-label">4 / 15마리 모음</p>
+        </div>
+
+        <div class="card">
+          <div class="dex-grid">
+
+            <button class="dex-cell representative" onclick="openDetail('크림냥이','고양이 · 오렌지 톤',true,null,null,true)">
+              <span class="rep-badge">대표</span>
+              <div class="creature-thumb" id="cat-orange-dex"></div>
+              <span class="dex-name">크림냥이</span>
+            </button>
+
+            <button class="dex-cell" onclick="openDetail('시바댕댕이','강아지 · 크림 톤',false,'🐶','#F4E4D6')">
+              <div class="creature-thumb wf-pic" style="background:#F4E4D6">🐶</div>
+              <span class="dex-name">시바댕댕이</span>
+            </button>
+
+            <button class="dex-cell" onclick="openDetail('노랑햄찌','햄스터 · 골든 톤',false,'🐹','#F4E4D6')">
+              <div class="creature-thumb wf-pic" style="background:#F4E4D6">🐹</div>
+              <span class="dex-name">노랑햄찌</span>
+            </button>
+
+            <button class="dex-cell" onclick="openDetail('눈송이토끼','토끼 · 화이트 톤',false,'🐰','#F4E4D6')">
+              <div class="creature-thumb wf-pic" style="background:#F4E4D6">🐰</div>
+              <span class="dex-name">눈송이토끼</span>
+            </button>
+
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+            <div class="dex-cell locked">
+              <span class="lock-icon">🔒</span>
+              <span class="dex-name">???</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 상세보기 모달: 클릭 시 여는 실제 인터랙션 -->
+      <div class="modal-overlay" id="dex-modal" hidden onclick="closeDetail(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <button class="close-x" onclick="closeDetail()" aria-label="닫기">×</button>
+          <div class="creature-thumb-lg wf-pic" id="modal-thumb" style="background:#F4E4D6; border-radius:999px">🐶</div>
+          <h3 id="modal-name">시바댕댕이</h3>
+          <p class="modal-sub" id="modal-sub">강아지 · 크림 톤</p>
+          <button class="btn-cute" id="modal-rep-btn" onclick="setRepresentative()">대표로 설정</button>
+          <button class="btn-ghost" onclick="closeDetail()">닫기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════ 화면 3: 대표 동물 반영 — 홈 ══════════════════════ -->
+  <section data-screen="home-preview" data-title="반영 예시 · 홈 화면">
+    <div class="screen-body">
+      <div class="sky-bg"></div>
+      <div class="preview-note">도감에서 "시바댕댕이"를 대표로 고르면, 등급 선택 화면 마스코트가 이렇게 바뀝니다. 상단의 도감 버튼이 이번 스펙에서 새로 추가되는 진입점입니다.</div>
+
+      <div class="topbar">
+        <h1>어떤 어휘를 풀까요?</h1>
+        <span class="chu-badge">🐾 14</span>
+        <button class="icon-btn" aria-label="상점·도감" onclick="prototypeShell.showScreen('shop-dex')">📖</button>
+        <button class="icon-btn" aria-label="설정">⚙</button>
+      </div>
+
+      <div class="card grade-card" style="margin-bottom:10px">
+        <div class="creature-thumb wf-pic" style="background:#F4E4D6; border-radius:999px">🐶</div>
+        <div style="flex:1">
+          <p class="grade-title">중등 필수</p>
+          <p class="grade-sub">단원 6개 · 5/30 Stage 클리어</p>
+        </div>
+      </div>
+      <div class="card grade-card">
+        <div class="creature-thumb wf-pic" style="background:#F4E4D6; border-radius:999px; opacity:.7">🐶</div>
+        <div style="flex:1">
+          <p class="grade-title">고등 필수</p>
+          <p class="grade-sub">단원 6개 · 0/30 Stage 클리어</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════ 화면 4: 대표 동물 반영 — 퀴즈 정답 피드백 ══════════════════════ -->
+  <section data-screen="quiz-preview" data-title="반영 예시 · 퀴즈 화면">
+    <div class="screen-body" style="position:relative">
+      <div class="sky-bg"></div>
+      <div class="preview-note">퀴즈의 생각·정답·오답·결과 화면도 전부 대표 동물(시바댕댕이)로 나옵니다. 지금 CatMascot이 갖고 있는 8가지 표정을 동물마다 새로 그려야 하는 부분입니다.</div>
+
+      <div class="topbar">
+        <button class="icon-btn" aria-label="일시정지">×</button>
+        <div style="flex:1; height:16px; border-radius:999px; border:2px solid var(--border); background:var(--muted); overflow:hidden">
+          <div style="height:100%; width:40%; background:var(--secondary)"></div>
+        </div>
+        <span style="font-size:.78rem; font-weight:700; color:var(--muted-foreground)">4/10</span>
+      </div>
+
+      <div class="quiz-feedback-overlay">
+        <div class="quiz-feedback-card">
+          <div class="creature-thumb-lg wf-pic" style="background:#FFE9DA; border-radius:999px">🐶</div>
+          <p class="result-title">정답이에요!</p>
+          <p class="result-sub">'담론'은 어떤 주제를 놓고 이야기를 주고받는 것을 뜻해요.</p>
+          <button class="btn-cute" style="background:var(--secondary); color:var(--secondary-foreground); border-color:color-mix(in oklch, var(--secondary-foreground) 20%, transparent)">다음 문제</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ── 실제 CatMascot 컴포넌트를 그대로 옮긴 SVG (오렌지 톤, happy 표정) ──
+  // 아직 그리지 않은 4종(강아지·토끼·햄스터·곰)과 다른 색 버전은 이모지 wf-pic으로 대신한다.
+  const CAT_SVG = (id) => `
+    <svg viewBox="0 0 100 104" style="width:100%;height:100%;overflow:visible">
+      <defs>
+        <radialGradient id="coat-${id}" cx="38%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#FFFDF8" /><stop offset="62%" stop-color="#FDF3E4" /><stop offset="100%" stop-color="#F0DFC4" />
+        </radialGradient>
+        <linearGradient id="patch-${id}" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FBC98E" /><stop offset="100%" stop-color="#E9A055" />
+        </linearGradient>
+        <linearGradient id="ear-${id}" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFE0EC" /><stop offset="100%" stop-color="#F7AFC9" />
+        </linearGradient>
+        <radialGradient id="blush-${id}" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FF9BC0" stop-opacity="0.7" /><stop offset="100%" stop-color="#FF9BC0" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <g>
+        <path d="M70 88 C85 87 93 74 88 63 C85 56 76 57 75 64 C74 71 80 77 69 80 Z" fill="url(#patch-${id})" stroke="#4a3428" stroke-width="2.6" stroke-linejoin="round" />
+        <path d="M50 46 C68 46 79 63 79 79 C79 92 66 98 50 98 C34 98 21 92 21 79 C21 63 32 46 50 46 Z" fill="url(#coat-${id})" stroke="#4a3428" stroke-width="3" stroke-linejoin="round" />
+        <ellipse cx="38" cy="91" rx="8" ry="5.6" fill="url(#coat-${id})" stroke="#4a3428" stroke-width="2.6" />
+        <ellipse cx="62" cy="91" rx="8" ry="5.6" fill="url(#coat-${id})" stroke="#4a3428" stroke-width="2.6" />
+        <path d="M28 24 C23 14 22 6 27 5 C33 4 40 12 44 19 Z" fill="url(#patch-${id})" stroke="#4a3428" stroke-width="2.8" stroke-linejoin="round" />
+        <path d="M72 24 C77 14 78 6 73 5 C67 4 60 12 56 19 Z" fill="url(#patch-${id})" stroke="#4a3428" stroke-width="2.8" stroke-linejoin="round" />
+        <path d="M30 21 C28 15 28 10 30 10 C33 10 37 15 39 19 Z" fill="url(#ear-${id})" />
+        <path d="M70 21 C72 15 72 10 70 10 C67 10 63 15 61 19 Z" fill="url(#ear-${id})" />
+        <path d="M50 10 C69 10 83 24 83 41 C83 57 68 67 50 67 C32 67 17 57 17 41 C17 24 31 10 50 10 Z" fill="url(#coat-${id})" stroke="#4a3428" stroke-width="3" stroke-linejoin="round" />
+        <path d="M50 10 C62 10 72 16 78 26 C70 21 60 19 50 19 C40 19 30 21 22 26 C28 16 38 10 50 10 Z" fill="url(#patch-${id})" opacity="0.95" />
+        <path d="M28 32 C24 39 24 47 27 52 C21 47 20 37 28 32 Z" fill="#FFFFFF" opacity="0.4" />
+        <circle cx="30" cy="50" r="8.5" fill="url(#blush-${id})" /><circle cx="70" cy="50" r="8.5" fill="url(#blush-${id})" />
+        <path d="M32 42 C36 35 43 35 47 42" stroke="#4a3428" stroke-width="3.4" fill="none" stroke-linecap="round" />
+        <path d="M53 42 C57 35 64 35 68 42" stroke="#4a3428" stroke-width="3.4" fill="none" stroke-linecap="round" />
+        <path d="M45.5 50 C45.5 47.6 54.5 47.6 54.5 50 C54.5 53 50 55.2 50 55.2 C50 55.2 45.5 53 45.5 50 Z" fill="#E8798F" />
+        <path d="M41 55.5 C44.5 61 48 61 50 55.8 C52 61 55.5 61 59 55.5" stroke="#4a3428" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4 42 C10 43 14 44 20 46" stroke="#4a3428" stroke-width="1.8" fill="none" stroke-linecap="round" />
+        <path d="M4 54 C10 53 14 52 20 50" stroke="#4a3428" stroke-width="1.8" fill="none" stroke-linecap="round" />
+        <path d="M96 42 C90 43 86 44 80 46" stroke="#4a3428" stroke-width="1.8" fill="none" stroke-linecap="round" />
+        <path d="M96 54 C90 53 86 52 80 50" stroke="#4a3428" stroke-width="1.8" fill="none" stroke-linecap="round" />
+      </g>
+    </svg>`;
+  document.getElementById('cat-orange-shop').innerHTML = CAT_SVG('shop');
+  document.getElementById('cat-orange-dex').innerHTML = CAT_SVG('dex');
+
+  function switchShopDex(view, tabEl) {
+    document.querySelectorAll('#shop-dex-tabs .tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    document.getElementById('view-shop').hidden = view !== 'shop';
+    document.getElementById('view-dex').hidden = view !== 'dex';
+    document.getElementById('shop-dex-title').textContent = view === 'shop' ? '동물 상점' : '내 도감';
+  }
+
+  function filterShop(tabEl) {
+    document.querySelectorAll('#shop-tabs .tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    const species = tabEl.dataset.species;
+    const items = [...document.querySelectorAll('#shop-list .shop-item')];
+    let visibleCount = 0;
+    items.forEach(item => {
+      const match = species === 'all' || item.dataset.species === species;
+      item.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+    document.getElementById('shop-empty-note').style.display = visibleCount === 0 ? '' : 'none';
+  }
+
+  function openDetail(name, sub, isRep, emoji, bg, isCat) {
+    document.getElementById('modal-name').textContent = name;
+    document.getElementById('modal-sub').textContent = sub;
+    const thumb = document.getElementById('modal-thumb');
+    if (isCat) {
+      thumb.innerHTML = CAT_SVG('modal-' + Date.now());
+      thumb.style.background = 'none';
+      thumb.classList.remove('wf-pic');
+    } else {
+      thumb.textContent = emoji;
+      thumb.style.background = bg;
+      thumb.classList.add('wf-pic');
+    }
+    const btn = document.getElementById('modal-rep-btn');
+    if (isRep) {
+      btn.textContent = '대표 중';
+      btn.classList.add('is-rep');
+    } else {
+      btn.textContent = '대표로 설정';
+      btn.classList.remove('is-rep');
+    }
+    document.getElementById('dex-modal').hidden = false;
+  }
+  function closeDetail(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('dex-modal').hidden = true;
+  }
+  function setRepresentative() {
+    const btn = document.getElementById('modal-rep-btn');
+    btn.textContent = '대표 중';
+    btn.classList.add('is-rep');
+  }
+</script>
+
+<script>
+  const stage = document.querySelector('.sh-stage');
+  const screens = [...stage.querySelectorAll('[data-screen]')];
+  const screenSelect = document.getElementById('sh-screen');
+  const stateSelect = document.getElementById('sh-state');
+  const vpBtn = document.getElementById('sh-vp');
+  let current = null;
+  let currentStates = [];
+
+  screens.forEach(s => {
+    const option = document.createElement('option');
+    option.textContent = s.dataset.title || s.dataset.screen;
+    option.value = s.dataset.screen;
+    screenSelect.append(option);
+  });
+  screenSelect.onchange = () => show(screenSelect.value);
+
+  function show(slug) {
+    current = screens.find(s => s.dataset.screen === slug) || screens[0];
+    screens.forEach(s => s.hidden = s !== current);
+    screenSelect.value = current.dataset.screen;
+    history.replaceState(null, '', '#' + current.dataset.screen);
+    buildStates();
+  }
+
+  function buildStates() {
+    const declared = (current.dataset.states || '').split(',').map(x => x.trim()).filter(Boolean);
+    currentStates = ['Default', ...declared.filter(name => name !== 'Default')];
+    stateSelect.innerHTML = '';
+    currentStates.forEach(name => {
+      const option = document.createElement('option');
+      option.textContent = name;
+      option.value = name;
+      stateSelect.append(option);
+    });
+    applyState('Default');
+  }
+
+  function applyState(name) {
+    const active = currentStates.includes(name) ? name : 'Default';
+    current.querySelectorAll('[data-when]').forEach(el => {
+      el.hidden = !el.dataset.when.split(',').map(x => x.trim()).includes(active);
+    });
+    stateSelect.value = active;
+  }
+  stateSelect.onchange = () => applyState(stateSelect.value);
+
+  window.prototypeShell = {
+    showScreen: show,
+    setState: applyState,
+    getScreen: () => current?.dataset.screen,
+    getState: () => stateSelect.value
+  };
+
+  const VPS = ['full', '390', '768'];
+  let vp = VPS.find(v => document.body.classList.contains('sh-vp-' + v)) || 'full';
+  function applyVp() {
+    VPS.forEach(v => document.body.classList.toggle('sh-vp-' + v, v === vp && v !== 'full'));
+    vpBtn.textContent = 'vp: ' + vp + ' (m)';
+    vpBtn.classList.toggle('on', vp !== 'full');
+  }
+  vpBtn.onclick = () => { vp = VPS[(VPS.indexOf(vp) + 1) % VPS.length]; applyVp(); };
+  applyVp();
+
+  addEventListener('keydown', e => {
+    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    const i = screens.indexOf(current);
+    if (e.key === 'ArrowRight') show(screens[(i + 1) % screens.length].dataset.screen);
+    if (e.key === 'ArrowLeft') show(screens[(i - 1 + screens.length) % screens.length].dataset.screen);
+    if (e.key === 'm') vpBtn.click();
+  });
+
+  addEventListener('hashchange', () => show(location.hash.slice(1)));
+  show(location.hash.slice(1));
+</script>
