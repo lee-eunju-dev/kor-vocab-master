@@ -1,4 +1,4 @@
-import { BookOpen, ChevronLeft, Home, Music, RotateCcw, Settings, Sparkle, Star, Trophy } from "lucide-react"
+import { BookOpen, Check, ChevronLeft, Home, Lock, Music, RotateCcw, Settings, Sparkle, Star, Trophy, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { CatMascot } from "@/components/cute/cat-mascot"
@@ -11,6 +11,7 @@ import { SkyBackdrop } from "@/components/cute/sky-backdrop"
 import { SpeechBubble } from "@/components/cute/speech-bubble"
 import { StageIsland } from "@/components/cute/stage-island"
 import { StarRating } from "@/components/cute/star-rating"
+import { cn } from "@/lib/utils"
 
 const CHOICES = [
   { label: "일이 일어날 수 있는 가능성", tone: "orange" as const },
@@ -102,6 +103,46 @@ export default function DesignPreviewPage() {
             </div>
           </PhoneFrame>
 
+          {/* 잠긴 Stage 안내 팝업 */}
+          <PhoneFrame label="잠긴 Stage 안내">
+            <div className="relative flex-1 px-4 pb-4">
+              <SkyBackdrop ground />
+
+              <div className="mb-4 flex items-center justify-between opacity-40">
+                <h3 className="text-base font-extrabold">Stage 목록</h3>
+                <Settings className="size-4" />
+              </div>
+
+              <div className="flex flex-col-reverse gap-9 pr-14 pb-2 opacity-40">
+                <div className="self-start">
+                  <StageIsland n={1} state="cleared" stars={3} />
+                </div>
+                <div className="self-end">
+                  <StageIsland n={2} state="cleared" stars={2} />
+                </div>
+                <div className="self-start">
+                  <StageIsland n={3} state="current" />
+                </div>
+                <div className="self-end">
+                  <StageIsland n={4} state="locked" />
+                </div>
+              </div>
+
+              <div className="absolute inset-0 flex items-center justify-center bg-foreground/35 px-8">
+                <CuteCard className="flex w-full flex-col items-center gap-2 text-center">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <Lock className="size-5" />
+                  </div>
+                  <p className="text-base font-extrabold">아직 잠겨 있어요</p>
+                  <p className="-mt-1 text-xs text-muted-foreground">Stage 3을 먼저 클리어하면 열려요</p>
+                  <Button variant="cute" className="mt-1 w-full">
+                    확인
+                  </Button>
+                </CuteCard>
+              </div>
+            </div>
+          </PhoneFrame>
+
           {/* 퀴즈 화면 */}
           <PhoneFrame label="퀴즈 화면">
             <div className="relative flex-1 px-4 pb-4">
@@ -140,6 +181,113 @@ export default function DesignPreviewPage() {
                     {choice.label}
                   </Button>
                 ))}
+              </div>
+            </div>
+          </PhoneFrame>
+
+          {/* 퀴즈 화면 · 정답 선택(팝업) */}
+          <PhoneFrame label="퀴즈 화면 · 정답">
+            <div className="relative flex-1 px-4 pb-4">
+              <SkyBackdrop />
+
+              <div className="mb-2 flex items-center gap-3 opacity-40">
+                <div className="h-4 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full w-3/10 rounded-full bg-secondary" />
+                </div>
+                <span className="text-xs font-bold text-muted-foreground">3/10</span>
+              </div>
+
+              <div className="mb-3 flex justify-center opacity-40">
+                <CatMascot expression="happy" className="size-20" />
+              </div>
+
+              <div className="opacity-40">
+                <SpeechBubble className="mb-4">
+                  <p className="text-base font-bold">Q. &lsquo;개연성&rsquo;의 뜻은?</p>
+                </SpeechBubble>
+              </div>
+
+              <div className="flex flex-col gap-2.5 opacity-40">
+                {CHOICES.map((choice, i) => (
+                  <Button
+                    key={choice.label}
+                    variant="cute"
+                    className={cn(
+                      "h-auto justify-start gap-2.5 px-3 py-2.5 text-left text-xs whitespace-normal",
+                      i === 0 && "ring-4 ring-secondary-foreground/30"
+                    )}
+                  >
+                    <CatMascot expression={i === 0 ? "wink" : "neutral"} tone={choice.tone} className="size-8 shrink-0" />
+                    {choice.label}
+                    {i === 0 && <Check className="ml-auto size-4 shrink-0" />}
+                  </Button>
+                ))}
+              </div>
+
+              {/* 보기를 고르면 이 팝업이 뜨고, 확인해야만 다음 문제로 넘어간다. 화면 크기가 고정된 실제 기기에서 이 흐름이 자연스럽다 */}
+              <div className="absolute inset-0 flex items-center justify-center bg-foreground/35 px-6">
+                <CuteCard className="flex w-full flex-col items-center gap-2 text-center">
+                  <CatMascot expression="wink" tone="orange" className="size-16" />
+                  <p className="text-lg font-extrabold text-secondary-foreground">정답이에요!</p>
+                  <p className="-mt-1 text-xs text-muted-foreground">&lsquo;개연성&rsquo;은 일이 일어날 수 있는 가능성을 뜻해요.</p>
+                  <Button variant="cuteMint" className="mt-1 w-full">
+                    다음 문제
+                  </Button>
+                </CuteCard>
+              </div>
+            </div>
+          </PhoneFrame>
+
+          {/* 퀴즈 화면 · 오답 선택(팝업) */}
+          <PhoneFrame label="퀴즈 화면 · 오답">
+            <div className="relative flex-1 px-4 pb-4">
+              <SkyBackdrop />
+
+              <div className="mb-2 flex items-center gap-3 opacity-40">
+                <div className="h-4 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full w-3/10 rounded-full bg-secondary" />
+                </div>
+                <span className="text-xs font-bold text-muted-foreground">3/10</span>
+              </div>
+
+              <div className="mb-3 flex justify-center opacity-40">
+                <CatMascot expression="neutral" className="size-20" />
+              </div>
+
+              <div className="opacity-40">
+                <SpeechBubble className="mb-4">
+                  <p className="text-base font-bold">Q. &lsquo;개연성&rsquo;의 뜻은?</p>
+                </SpeechBubble>
+              </div>
+
+              <div className="flex flex-col gap-2.5 opacity-40">
+                {CHOICES.map((choice, i) => (
+                  <Button
+                    key={choice.label}
+                    variant="cute"
+                    className={cn(
+                      "h-auto justify-start gap-2.5 px-3 py-2.5 text-left text-xs whitespace-normal",
+                      i === 2 && "ring-4 ring-destructive/40",
+                      i === 0 && "ring-4 ring-secondary-foreground/30"
+                    )}
+                  >
+                    <CatMascot expression={i === 2 ? "wink" : "neutral"} tone={choice.tone} className="size-8 shrink-0" />
+                    {choice.label}
+                    {i === 2 && <X className="ml-auto size-4 shrink-0 text-destructive" />}
+                    {i === 0 && <Check className="ml-auto size-4 shrink-0" />}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="absolute inset-0 flex items-center justify-center bg-foreground/35 px-6">
+                <CuteCard className="flex w-full flex-col items-center gap-2 text-center">
+                  <CatMascot expression="neutral" tone="gray" className="size-16" />
+                  <p className="text-lg font-extrabold">괜찮아요, 다음엔 맞힐 거예요!</p>
+                  <p className="-mt-1 text-xs text-muted-foreground">정답은 &lsquo;일이 일어날 수 있는 가능성&rsquo;이에요.</p>
+                  <Button variant="cuteMint" className="mt-1 w-full">
+                    다음 문제
+                  </Button>
+                </CuteCard>
               </div>
             </div>
           </PhoneFrame>
@@ -204,7 +352,7 @@ export default function DesignPreviewPage() {
                 <ChuBadge amount={10} />
                 <div className="flex w-full flex-col gap-2">
                   <Button variant="cute" className="w-full">
-                    다음 문제
+                    다음 Stage
                   </Button>
                   <Button variant="cuteMint" className="w-full">
                     해설 보기
@@ -214,6 +362,61 @@ export default function DesignPreviewPage() {
 
               <Sparkle className="absolute top-6 left-6 size-5 fill-primary text-primary-foreground/40" />
               <Sparkle className="absolute right-6 bottom-24 size-4 fill-secondary text-secondary-foreground/40" />
+            </div>
+          </PhoneFrame>
+
+          {/* 결과 화면 · 최소 별점(★1) */}
+          <PhoneFrame label="결과 화면 · ★1">
+            <div className="relative flex flex-1 items-center justify-center px-5">
+              <SkyBackdrop />
+
+              <CuteCard className="relative z-10 flex w-full flex-col items-center gap-3 text-center">
+                <CatMascot expression="happy" float className="size-28" />
+                <p className="text-xl font-extrabold">수고했어요!</p>
+                <StarRating count={1} />
+                <ChuBadge amount={4} />
+                <div className="flex w-full flex-col gap-2">
+                  <Button variant="cuteMint" className="w-full">
+                    다시 도전!
+                  </Button>
+                  <Button variant="ghost" className="w-full text-muted-foreground">
+                    Stage 목록으로
+                  </Button>
+                </div>
+              </CuteCard>
+            </div>
+          </PhoneFrame>
+
+          {/* 결과 화면 · 재도전(포인트 재지급 없음) */}
+          <PhoneFrame label="결과 화면 · 재도전">
+            <div className="relative flex flex-1 items-center justify-center px-5">
+              <SkyBackdrop />
+              <div className="pointer-events-none absolute inset-0">
+                {CONFETTI.map((c, i) => (
+                  <Star
+                    key={i}
+                    className={`absolute size-4 fill-current ${c.color} ${c.rotate}`}
+                    style={{ left: c.left, top: c.top }}
+                  />
+                ))}
+              </div>
+
+              <CuteCard className="relative z-10 flex w-full flex-col items-center gap-3 text-center">
+                <CatMascot expression="crown" float className="size-28" />
+                <p className="text-xl font-extrabold">최고 기록 경신!</p>
+                <StarRating count={3} />
+                <p className="rounded-full border-4 border-muted bg-muted px-4 py-1.5 text-xs font-bold text-muted-foreground">
+                  포인트는 처음 클리어할 때만 받아요
+                </p>
+                <div className="flex w-full flex-col gap-2">
+                  <Button variant="cute" className="w-full">
+                    다음 Stage
+                  </Button>
+                  <Button variant="ghost" className="w-full text-muted-foreground">
+                    Stage 목록으로
+                  </Button>
+                </div>
+              </CuteCard>
             </div>
           </PhoneFrame>
 
