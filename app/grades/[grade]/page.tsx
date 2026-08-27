@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Check, ChevronLeft, Lock, PawPrint, Settings, Star } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Lock, PawPrint, Settings, Star } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { CatMascot } from "@/components/cute/cat-mascot"
@@ -16,12 +17,21 @@ function isGrade(value: string): value is Grade {
   return value === "middle" || value === "high"
 }
 
+// 챕터가 늘어나도 한 화면에서 다 스크롤하지 않도록 페이지 단위로 나눠 보여준다.
+const CHAPTERS_PER_PAGE = 3
+
 export default function GradeChapterListPage() {
   const params = useParams<{ grade: string }>()
+  // grade가 바뀌면 페이지 번호를 1페이지로 되돌리기 위해 key로 강제 리마운트한다.
+  return <GradeChapterListView key={params.grade} gradeParam={params.grade} />
+}
+
+function GradeChapterListView({ gradeParam }: { gradeParam: string }) {
   const router = useRouter()
   const progress = useProgress()
+  const [page, setPage] = useState(0)
 
-  if (!isGrade(params.grade)) {
+  if (!isGrade(gradeParam)) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-base font-extrabold">존재하지 않는 등급이에요</p>
@@ -32,8 +42,14 @@ export default function GradeChapterListPage() {
     )
   }
 
-  const grade = params.grade
+  const grade = gradeParam
   const chapters = CHAPTERS.filter((chapter) => chapter.grade === grade)
+  const pageCount = Math.max(1, Math.ceil(chapters.length / CHAPTERS_PER_PAGE))
+  const currentPage = Math.min(page, pageCount - 1)
+  const pagedChapters = chapters.slice(
+    currentPage * CHAPTERS_PER_PAGE,
+    currentPage * CHAPTERS_PER_PAGE + CHAPTERS_PER_PAGE
+  )
 
   return (
     <div className="relative flex flex-1 flex-col px-4 pt-5 pb-8">
@@ -72,7 +88,7 @@ export default function GradeChapterListPage() {
           </CuteCard>
         ) : (
           <div className="flex flex-col gap-3">
-            {chapters.map((chapter) => {
+            {pagedChapters.map((chapter) => {
               const stageIds = chapter.stages.map((stage) => stage.id)
               const stats = chapterProgress(progress, stageIds)
               const percent = stats.totalStages === 0 ? 0 : (stats.clearedStages / stats.totalStages) * 100
@@ -132,6 +148,34 @@ export default function GradeChapterListPage() {
                 </button>
               )
             })}
+          </div>
+        )}
+
+        {pageCount > 1 && (
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full border-2 border-border bg-card/90"
+              disabled={currentPage === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              aria-label="이전 단원"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="text-xs font-bold text-muted-foreground">
+              {currentPage + 1} / {pageCount}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full border-2 border-border bg-card/90"
+              disabled={currentPage === pageCount - 1}
+              onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+              aria-label="다음 단원"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
         )}
 
