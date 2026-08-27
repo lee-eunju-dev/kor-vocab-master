@@ -14,7 +14,7 @@ import { GRADE_LABEL, type Grade } from "@/lib/quiz-types"
 import { chapterProgress, useProgress } from "@/lib/progress-storage"
 
 function isGrade(value: string): value is Grade {
-  return value === "middle" || value === "high"
+  return value === "elementary" || value === "middle" || value === "high"
 }
 
 // 챕터가 늘어나도 한 화면에서 다 스크롤하지 않도록 페이지 단위로 나눠 보여준다.
@@ -91,6 +91,9 @@ function GradeChapterListView({ gradeParam }: { gradeParam: string }) {
             {pagedChapters.map((chapter) => {
               const stats = chapterProgress(progress, chapter.stages)
               const percent = stats.totalStages === 0 ? 0 : (stats.clearedStages / stats.totalStages) * 100
+              // chapter.id는 등급을 넘나드는 전역 고유 번호(초등 19~27 등)라 그대로
+              // 보여주면 사용자에게 이상해 보인다. 그 등급 안에서 몇 번째 단원인지로 보여준다.
+              const orderInGrade = chapters.indexOf(chapter) + 1
 
               return (
                 <button
@@ -119,7 +122,7 @@ function GradeChapterListView({ gradeParam }: { gradeParam: string }) {
                       ) : stats.done ? (
                         <Check className="size-5" />
                       ) : (
-                        chapter.id
+                        orderInGrade
                       )}
                     </div>
 

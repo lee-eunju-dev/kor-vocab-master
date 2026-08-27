@@ -1,27 +1,43 @@
+import { ELEMENTARY_CHAPTERS } from "@/data/vocab/elementary-words"
 import { HIGH_CHAPTERS } from "@/data/vocab/high-words"
 import { MIDDLE_CHAPTERS } from "@/data/vocab/middle-words"
 import type { ChapterSource, WordEntry } from "@/data/vocab/types"
-import type { Chapter, Question, Stage } from "@/lib/quiz-types"
+import type { Chapter, Grade, Question, Stage } from "@/lib/quiz-types"
 
 // 어휘 원천 데이터는 등급별로 data/vocab/*-words.ts에 나눠 관리한다.
-// (data/vocab/middle-words.ts, data/vocab/high-words.ts)
+// (data/vocab/elementary-words.ts, data/vocab/middle-words.ts, data/vocab/high-words.ts)
 //
 // 어휘를 늘릴 때는 각 챕터의 words에 항목을 추가하면 된다. 챕터 하나의 단어가
 // 10개를 넘으면 10개 단위로 Stage가 자동으로 늘어나고, 화면·로직은 그대로 돈다.
 // 챕터 자체를 늘릴 때는 해당 등급 파일의 배열에 항목을 추가한다.
 //
+// 배열 순서(초등 → 중등 → 고등)가 곧 논리적 진행 순서다. 각 등급의 첫 챕터는
+// 바로 앞 등급의 마지막 Stage를 깼는지로 잠기므로(순차 잠금이 등급을 넘어 전역
+// 하나로 이어진다), 이 순서를 바꾸면 기존에 쌓인 클리어 기록이 엉뚱한 잠금
+// 조건에 걸릴 수 있다.
+//
 // 주의: Stage 번호는 챕터 순서대로 전체에 걸쳐 이어 붙인다. 그래서 앞 챕터에
 // 단어를 끼워 넣으면 뒤 Stage 번호가 밀리고, 이미 저장된 클리어 기록이 다른
 // Stage에 붙게 된다. 어휘를 대량으로 채워 넣을 때는 progress-storage의
 // STORAGE_KEY 버전을 올려 기록을 새로 시작하는 편이 안전하다.
-const CHAPTER_SOURCES: ChapterSource[] = [...MIDDLE_CHAPTERS, ...HIGH_CHAPTERS]
+const CHAPTER_SOURCES: ChapterSource[] = [...ELEMENTARY_CHAPTERS, ...MIDDLE_CHAPTERS, ...HIGH_CHAPTERS]
 
 export const QUESTIONS_PER_STAGE = 10
 const DISTRACTOR_OFFSETS = [7, 13, 29]
 
-// 오답 보기는 전체 어휘에서 가져온다. 같은 챕터 안에서만 뽑으면 보기가 지나치게
-// 비슷해져 헷갈리기만 하고, 어휘가 적은 챕터에서는 보기를 못 채운다.
-const ALL_WORDS: WordEntry[] = CHAPTER_SOURCES.flatMap((chapter) => chapter.words)
+// 오답 보기는 같은 챕터가 아니라 등급 단위의 풀에서 가져온다. 같은 챕터
+// 안에서만 뽑으면 보기가 지나치게 비슷해져 헷갈리기만 하고, 어휘가 적은
+// 챕터에서는 보기를 못 채운다.
+//
+// 풀은 등급별로 분리한다. 초등 문제의 오답에 중고등 개념어가 섞이면 학생이
+// 뜻도 모르는 어려운 말이 나와 버리므로 초등끼리만, 중등도 중등끼리만
+// 묶는다. 고등은 중등 개념을 심화하는 성격이라 중등과 섞여도 이질감이
+// 적으므로 중·고등을 합친 풀에서 뽑는다.
+const WORDS_BY_GRADE: Record<Grade, WordEntry[]> = {
+  elementary: ELEMENTARY_CHAPTERS.flatMap((chapter) => chapter.words),
+  middle: MIDDLE_CHAPTERS.flatMap((chapter) => chapter.words),
+  high: [...MIDDLE_CHAPTERS, ...HIGH_CHAPTERS].flatMap((chapter) => chapter.words),
+}
 
 function hasFinalConsonant(text: string): boolean {
   const code = text.charCodeAt(text.length - 1)
@@ -37,12 +53,14 @@ function objectParticle(text: string): string {
   return hasFinalConsonant(text) ? "을" : "를"
 }
 
-function buildQuestion(index: number): Question {
-  const { word, definition } = ALL_WORDS[index]
+function buildQuestion(entry: WordEntry, grade: Grade): Question {
+  const { word, definition } = entry
+  const pool = WORDS_BY_GRADE[grade]
+  const selfIndex = pool.indexOf(entry)
   const distractors = DISTRACTOR_OFFSETS.map(
-    (offset) => ALL_WORDS[(index + offset) % ALL_WORDS.length].definition
+    (offset) => pool[(selfIndex + offset) % pool.length].definition
   )
-  const answerIndex = index % 4
+  const answerIndex = selfIndex % 4
   const choices = [...distractors]
   choices.splice(answerIndex, 0, definition)
 
@@ -72,26 +90,25 @@ function buildQuestion(index: number): Question {
 // 문제는 항상 10개"를 보장하므로, 문제가 3개뿐인 Stage를 만들면 안 된다.
 // 따라서 각 챕터의 words는 10의 배수로 채워야 하고, 아니면 남는 단어는 버려진다.
 function buildChapters(): Chapter[] {
-  let wordCursor = 0
   const stagesInOrder: Stage[] = []
 
   const chapters = CHAPTER_SOURCES.map((source) => {
     const stageCount = Math.floor(source.words.length / QUESTIONS_PER_STAGE)
 
     const stages: Stage[] = Array.from({ length: stageCount }, (_, stageIndex) => {
-      const start = wordCursor + stageIndex * QUESTIONS_PER_STAGE
+      const start = stageIndex * QUESTIONS_PER_STAGE
       const stage: Stage = {
         id: source.id * 100 + stageIndex + 1,
         chapterId: source.id,
-        questions: Array.from({ length: QUESTIONS_PER_STAGE }, (_, i) => buildQuestion(start + i)),
+        questions: Array.from({ length: QUESTIONS_PER_STAGE }, (_, i) =>
+          buildQuestion(source.words[start + i], source.grade)
+        ),
         prevStageId: null,
         nextStageId: null,
       }
       stagesInOrder.push(stage)
       return stage
     })
-
-    wordCursor += source.words.length
 
     return { id: source.id, title: source.title, grade: source.grade, stages }
   })

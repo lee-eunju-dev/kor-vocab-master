@@ -11,7 +11,13 @@ import { CHAPTERS } from "@/data/vocab-stages"
 import { GRADE_LABEL, type Grade } from "@/lib/quiz-types"
 import { chapterProgress, useProgress } from "@/lib/progress-storage"
 
-const GRADE_ORDER: Grade[] = ["middle", "high"]
+const GRADE_ORDER: Grade[] = ["elementary", "middle", "high"]
+
+const GRADE_MASCOT: Record<Grade, { expression: "wink" | "happy" | "crown"; tone: "white" | "orange" | "gray" }> = {
+  elementary: { expression: "wink", tone: "white" },
+  middle: { expression: "happy", tone: "orange" },
+  high: { expression: "crown", tone: "gray" },
+}
 
 export default function GradeListPage() {
   const router = useRouter()
@@ -59,8 +65,8 @@ export default function GradeListPage() {
               >
                 <CuteCard className="flex items-center gap-4 p-5">
                   <CatMascot
-                    expression={grade === "high" ? "crown" : "happy"}
-                    tone={grade === "high" ? "gray" : "orange"}
+                    expression={GRADE_MASCOT[grade].expression}
+                    tone={GRADE_MASCOT[grade].tone}
                     className="size-16 shrink-0"
                   />
 

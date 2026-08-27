@@ -19,7 +19,9 @@ export interface StageResult {
   totalPoints: number
 }
 
-const STORAGE_KEY = "kor-vocab-master:progress:v5"
+// v7: 초등 어휘를 9개 단원(450단어)으로 확장하면서 Stage 구성이 다시 바뀌어
+// 기록을 새로 시작한다 (docs/specs/elementary-vocab-grade/spec.md 참고).
+const STORAGE_KEY = "kor-vocab-master:progress:v7"
 const EMPTY_PROGRESS: Progress = { stagesCleared: {}, points: 0 }
 
 // loadProgress()가 매번 새 객체를 만들면 useSyncExternalStore가 값이 바뀐 줄 알고

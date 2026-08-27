@@ -21,8 +21,8 @@ export interface Stage {
   nextStageId: number | null
 }
 
-/** 어휘 등급 구분. 국립국어원 등급의 중급(B)/고급(C)에 대응한다. */
-export type Grade = "middle" | "high"
+/** 어휘 등급 구분. 국립국어원 등급의 초급(A, 초등 4학년 이상)/중급(B)/고급(C)에 대응한다. */
+export type Grade = "elementary" | "middle" | "high"
 
 export interface Chapter {
   id: number
@@ -32,6 +32,7 @@ export interface Chapter {
 }
 
 export const GRADE_LABEL: Record<Grade, string> = {
+  elementary: "초등 필수",
   middle: "중등 필수",
   high: "고등 필수",
 }
